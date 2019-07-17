@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nuage-network-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: nuage-network-operator
+  template:
+    metadata:
+      labels:
+        name: nuage-network-operator
+    spec:
+      serviceAccountName: nuage-network-operator
+      containers:
+        - name: nuage-network-operator
+          # Replace this with the built image name
+          image: REPLACE_IMAGE
+          command:
+          - nuage-network-operator
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "nuage-network-operator"
