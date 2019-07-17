@@ -1,0 +1,7 @@
+apiVersion: operator.nuage.io/v1alpha1
+kind: Network
+metadata:
+  name: example-network
+spec:
+  # Add fields here
+  size: 3
