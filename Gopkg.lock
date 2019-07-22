@@ -20,6 +20,24 @@
   version = "v12.3.0"
 
 [[projects]]
+  name = "github.com/Masterminds/goutils"
+  packages = ["."]
+  revision = "41ac8693c5c10a92ea1ff5ac3a7f95646f6123b0"
+  version = "v1.1.0"
+
+[[projects]]
+  name = "github.com/Masterminds/semver"
+  packages = ["."]
+  revision = "c7af12943936e8c39859482e61f0574c2fd7fc75"
+  version = "v1.4.2"
+
+[[projects]]
+  name = "github.com/Masterminds/sprig"
+  packages = ["."]
+  revision = "258b00ffa7318e8b109a141349980ffbd30a35db"
+  version = "v2.20.0"
+
+[[projects]]
   name = "github.com/PuerkitoBio/purell"
   packages = ["."]
   revision = "44968752391892e1b0d0b821ee79e9a85fa13049"
@@ -188,6 +206,12 @@
   version = "v0.5.1"
 
 [[projects]]
+  name = "github.com/huandu/xstrings"
+  packages = ["."]
+  revision = "f02667b379e2fb5916c3cda2cf31e0eb885d79f8"
+  version = "v1.2.0"
+
+[[projects]]
   name = "github.com/imdario/mergo"
   packages = ["."]
   revision = "7c29201646fa3de8506f701213473dd407f19646"
@@ -236,10 +260,22 @@
   version = "1.0.1"
 
 [[projects]]
-  branch = "release-4.2"
+  name = "github.com/onsi/gomega"
+  packages = [".","format","internal/assertion","internal/asyncassertion","internal/oraclematcher","internal/testingtsupport","matchers","matchers/support/goraph/bipartitegraph","matchers/support/goraph/edge","matchers/support/goraph/node","matchers/support/goraph/util","types"]
+  revision = "90e289841c1ed79b7a598a7cd9959750cb5e89e2"
+  version = "v1.5.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/openshift/api"
+  packages = ["config/v1"]
+  revision = "9525304a0adb725ab4a4a54539a1a6bf6cc343d3"
+
+[[projects]]
+  branch = "master"
   name = "github.com/operator-framework/operator-sdk"
   packages = ["pkg/k8sutil","pkg/kube-metrics","pkg/leader","pkg/log/zap","pkg/metrics","pkg/restmapper","version"]
-  revision = "f4dd3b1d3f24d31e962c5fca51176d986a2d7737"
+  revision = "ce367cbcb72654c7399705c429964d09f1f30cd9"
 
 [[projects]]
   name = "github.com/pborman/uuid"
@@ -334,13 +370,13 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["ssh/terminal"]
+  packages = ["pbkdf2","scrypt","ssh/terminal"]
   revision = "4def268fd1a49955bfb3dda92fe3db4f924f2285"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["context","context/ctxhttp","http/httpguts","http2","http2/hpack","idna","internal/timeseries","trace"]
+  packages = ["context","context/ctxhttp","html","html/atom","html/charset","http/httpguts","http2","http2/hpack","idna","internal/timeseries","trace"]
   revision = "da137c7871d730100384dbcf36e6f8fa493aef5b"
 
 [[projects]]
@@ -363,7 +399,7 @@
 
 [[projects]]
   name = "golang.org/x/text"
-  packages = ["collate","collate/build","internal/colltab","internal/gen","internal/language","internal/language/compact","internal/tag","internal/triegen","internal/ucd","language","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable","width"]
+  packages = ["collate","collate/build","encoding","encoding/charmap","encoding/htmlindex","encoding/internal","encoding/internal/identifier","encoding/japanese","encoding/korean","encoding/simplifiedchinese","encoding/traditionalchinese","encoding/unicode","internal/colltab","internal/gen","internal/language","internal/language/compact","internal/tag","internal/triegen","internal/ucd","internal/utf8internal","language","runes","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable","width"]
   revision = "342b2e1fbaa52c93f31447ad2c6abc048c63e475"
   version = "v0.3.2"
 
@@ -460,7 +496,7 @@
 
 [[projects]]
   name = "sigs.k8s.io/controller-runtime"
-  packages = ["pkg/cache","pkg/cache/internal","pkg/client","pkg/client/apiutil","pkg/client/config","pkg/internal/recorder","pkg/leaderelection","pkg/manager","pkg/metrics","pkg/patch","pkg/recorder","pkg/runtime/inject","pkg/runtime/log","pkg/runtime/signals","pkg/webhook/admission","pkg/webhook/admission/types","pkg/webhook/internal/metrics","pkg/webhook/types"]
+  packages = ["pkg/cache","pkg/cache/internal","pkg/client","pkg/client/apiutil","pkg/client/config","pkg/controller","pkg/controller/controllerutil","pkg/event","pkg/handler","pkg/internal/controller","pkg/internal/controller/metrics","pkg/internal/recorder","pkg/leaderelection","pkg/manager","pkg/metrics","pkg/patch","pkg/predicate","pkg/reconcile","pkg/recorder","pkg/runtime/inject","pkg/runtime/log","pkg/runtime/scheme","pkg/runtime/signals","pkg/source","pkg/source/internal","pkg/webhook/admission","pkg/webhook/admission/types","pkg/webhook/internal/metrics","pkg/webhook/types"]
   revision = "12d98582e72927b6cd0123e2b4e819f9341ce62c"
   version = "v0.1.10"
 
@@ -478,6 +514,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4d5c032093fe360e3ecb00425009a7b9be83fb0676f8053881e42ab80c251a71"
+  inputs-digest = "f8875b067a161411c630e795f02f7bec12aa6e8592e8a87da410a3ca3a41da64"
   solver-name = "gps-cdcl"
   solver-version = 1
