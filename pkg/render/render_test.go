@@ -94,5 +94,23 @@ func TestRenderDir(t *testing.T) {
 
 	o, err := RenderDir("testdata", &d)
 	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(o).To(HaveLen(6))
+	g.Expect(o).To(HaveLen(9))
+}
+
+func TestRenderDirOrder(t *testing.T) {
+	g := NewGomegaWithT(t)
+
+	d := MakeRenderData()
+	d.Funcs["fname"] = func(s string) string { return s }
+	d.Data["Namespace"] = "myns"
+
+	o, err := RenderDir("testdata", &d)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(o).To(HaveLen(9))
+	g.Expect(o[0].GetObjectKind().GroupVersionKind().String()).To(Equal("/v1, Kind=ServiceAccount"))
+	g.Expect(o[0].GetName()).To(Equal("nuage-cni"))
+	g.Expect(o[1].GetObjectKind().GroupVersionKind().String()).To(Equal("rbac.authorization.k8s.io/v1, Kind=ClusterRole"))
+	g.Expect(o[1].GetName()).To(Equal("nuage-cni"))
+	g.Expect(o[2].GetObjectKind().GroupVersionKind().String()).To(Equal("rbac.authorization.k8s.io/v1, Kind=ClusterRoleBinding"))
+	g.Expect(o[2].GetName()).To(Equal("nuage-cni"))
 }
