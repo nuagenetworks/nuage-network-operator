@@ -118,6 +118,22 @@ type NetworkList struct {
 	Items           []Network `json:"items"`
 }
 
+// ClusterNetworkInfo contains the network configuration of cluster
+type ClusterNetworkInfo struct {
+	ClusterNetworkCIDR         string
+	ServiceNetworkCIDR         string
+	ClusterNetworkSubnetLength uint32
+}
+
+// CertificateConfig contains certificates for CNI and Monitor
+type CertificateConfig struct {
+	CACert     string
+	ServerCert string
+	ServerKey  string
+	ClientCert string
+	ClientKey  string
+}
+
 func init() {
 	SchemeBuilder.Register(&Network{}, &NetworkList{})
 }
