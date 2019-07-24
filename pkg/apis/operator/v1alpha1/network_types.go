@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"time"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -125,13 +127,19 @@ type ClusterNetworkInfo struct {
 	ClusterNetworkSubnetLength uint32
 }
 
-// CertificateConfig contains certificates for CNI and Monitor
-type CertificateConfig struct {
-	CACert     string
-	ServerCert string
-	ServerKey  string
-	ClientCert string
-	ClientKey  string
+// TLSCertificates contains certificates for CNI and Monitor
+type TLSCertificates struct {
+	CA          *string
+	Certificate *string
+	PrivateKey  *string
+}
+
+// CertGenConfig certificate data for input generation
+type CertGenConfig struct {
+	ECDSACurve *string
+	ValidFrom  *string
+	ValidFor   time.Duration
+	RSABits    int
 }
 
 func init() {
