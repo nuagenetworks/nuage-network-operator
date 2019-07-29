@@ -11,6 +11,8 @@ data:
       {{with .KubeConfig}}
       kubeConfig: /usr/share/vsp-k8s/nuage.kubeconfig
       {{end}}
+      # cluster network config
+      masterConfig: /usr/share/nuage-openshift-monitor/net-config.yaml
       # Cluster Network CIDR
       clusterNetworkCIDR: {{.ClusterNetworkConfig.ClusterNetworkCIDR}}
       # Service Network CIDR

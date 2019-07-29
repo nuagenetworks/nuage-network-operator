@@ -86,7 +86,7 @@ func RenderTemplate(path string, d *RenderData) ([]*unstructured.Unstructured, e
 	}
 
 	rendered := bytes.Buffer{}
-	if err := tmpl.Execute(&rendered, d.Data); err != nil {
+	if err := tmpl.Execute(&rendered, d.Config); err != nil {
 		return nil, errors.Wrapf(err, "failed to render manifest %s", path)
 	}
 

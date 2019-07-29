@@ -6,6 +6,7 @@ ENV OPERATOR=/usr/local/bin/nuage-network-operator \
 
 # install operator binary
 COPY build/_output/bin/nuage-network-operator ${OPERATOR}
+COPY bindata /bindata
 
 COPY build/bin /usr/local/bin
 RUN  /usr/local/bin/user_setup

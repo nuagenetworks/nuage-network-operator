@@ -23,7 +23,8 @@ import (
 )
 
 var (
-	log          = logf.Log.WithName("controller_network")
+	log = logf.Log.WithName("controller_network")
+	//ManifestPath is the path to templates directory
 	ManifestPath = "./bindata"
 )
 
@@ -141,6 +142,7 @@ func (r *ReconcileNetwork) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
+	//Render the templates and get the objects
 	renderData := render.MakeRenderData(&operatorv1alpha1.RenderConfig{
 		instance.Spec,
 		"https://0.0.0.0:9443",
@@ -154,6 +156,7 @@ func (r *ReconcileNetwork) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
+	//Create the objects against API server
 	for _, obj := range objs {
 		if err := r.client.Create(context.TODO(), obj); err != nil {
 			log.Error(err, "error creating the object %v", err)
