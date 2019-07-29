@@ -16,25 +16,23 @@ func TestParse(t *testing.T) {
 	g.Expect(err).To(BeNil())
 	g.Expect(c.MTU).To(Equal(1450))
 
-	c = &operv1.CNIConfigDefinition{}
 	c.NuageSiteID = -1
 	err = Parse(c)
 	g.Expect(err).To(BeNil())
 
-	c = &operv1.CNIConfigDefinition{}
 	c.NuageSiteID = 10
 	err = Parse(c)
 	g.Expect(err).Should(HaveOccurred())
 	g.Expect(err.Error()).Should(ContainSubstring("non negative values"))
 
-	c = &operv1.CNIConfigDefinition{}
 	c.MTU = 1500
+	c.NuageSiteID = -1
 	err = Parse(c)
 	g.Expect(err).Should(HaveOccurred())
 	g.Expect(err.Error()).Should(ContainSubstring("mtu exceeds"))
 
-	c = &operv1.CNIConfigDefinition{}
 	c.MTU = 1450
 	err = Parse(c)
 	g.Expect(err).ShouldNot(HaveOccurred())
+	g.Expect(c.ServiceAccountName).To(Equal(DefaultResourceName))
 }

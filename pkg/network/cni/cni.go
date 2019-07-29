@@ -32,6 +32,8 @@ const (
 	VRSConnCheckTimer = 180
 	//StaleEntryTimeout removes the stale entries from OVSDB after this time
 	StaleEntryTimeout = 600
+	//DefaultResourceName is the name of the resources like sa, role and role binding
+	DefaultResourceName = "nuage-cni"
 )
 
 //Parse validates the CNI config definition and fill in default values
@@ -89,4 +91,16 @@ func fillDefaults(config *operv1.CNIConfigDefinition) {
 	if config.StaleEntryTimeout == 0 {
 		config.StaleEntryTimeout = 600
 	}
+	if len(config.ServiceAccountName) == 0 {
+		config.ServiceAccountName = DefaultResourceName
+	}
+
+	if len(config.ClusterRoleName) == 0 {
+		config.ClusterRoleName = DefaultResourceName
+	}
+
+	if len(config.ClusterRoleBindingName) == 0 {
+		config.ClusterRoleBindingName = DefaultResourceName
+	}
+
 }

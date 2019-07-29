@@ -28,11 +28,11 @@ type MonitorConfigDefinition struct {
 	VSDPort                int      `json:"vsdPort"`
 	VSDMetadata            Metadata `json:"vsdMetadata"`
 	VSDFlags               Flags    `json:"vsdFlags"`
-	RestServerAddress      string   `json:"restServerAddress"`
-	RestServerPort         int      `json:"restServerPort"`
-	ServiceAccountName     string   `json:"ServiceAccountName"`
-	ClusterRoleName        string   `json:"ClusterRoleName"`
-	ClusterRoleBindingName string   `json:"ClusterRoleBindingName"`
+	RestServerAddress      string   `json:"restServerAddress,omitempty"`
+	RestServerPort         int      `json:"restServerPort,omitempty"`
+	ServiceAccountName     string   `json:"ServiceAccountName,omitempty"`
+	ClusterRoleName        string   `json:"ClusterRoleName,omitempty"`
+	ClusterRoleBindingName string   `json:"ClusterRoleBindingName,omitempty"`
 }
 
 // VRSConfigDefinition holds user specified config for VRS
@@ -57,6 +57,11 @@ type CNIConfigDefinition struct {
 	PortResolveTimer        int    `json:"portResolveTimer,omitempty"`
 	VRSConnectionCheckTimer int    `json:"vrsConnectionCheckTimer,omitempty"`
 	StaleEntryTimeout       int    `json:"staleEntryTimeout,omitempty"`
+	ServiceAccountName      string `json:"serviceAccountName,omitempty"`
+	ClusterRoleName         string `json:"clusterRoleName,omitempty"`
+	ClusterRoleBindingName  string `json:"clusterRoleBindingName,omitempty"`
+	NuageMonitorURL         string `json:"nuageMonitorURL,omitempty"`
+	KubeConfig              string `json:"kubeConfig,omitempty"`
 }
 
 // Metadata holds the VSD metadata info
