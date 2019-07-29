@@ -291,6 +291,11 @@ func (in *TLSCertificates) DeepCopyInto(out *TLSCertificates) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.CertificateDir != nil {
+		in, out := &in.CertificateDir, &out.CertificateDir
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 

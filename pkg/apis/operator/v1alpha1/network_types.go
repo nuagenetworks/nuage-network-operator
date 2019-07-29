@@ -25,9 +25,14 @@ type MonitorConfigDefinition struct {
 	// +kubebuilder:validation:MinLength=1
 	VSDAddress string `json:"vsdAddress"`
 	// +kubebuilder:validation:Minimum=0
-	VSDPort     int      `json:"vsdPort"`
-	VSDMetadata Metadata `json:"vsdMetadata"`
-	VSDFlags    Flags    `json:"vsdFlags"`
+	VSDPort                int      `json:"vsdPort"`
+	VSDMetadata            Metadata `json:"vsdMetadata"`
+	VSDFlags               Flags    `json:"vsdFlags"`
+	RestServerAddress      string   `json:"restServerAddress"`
+	RestServerPort         int      `json:"restServerPort"`
+	ServiceAccountName     string   `json:"ServiceAccountName"`
+	ClusterRoleName        string   `json:"ClusterRoleName"`
+	ClusterRoleBindingName string   `json:"ClusterRoleBindingName"`
 }
 
 // VRSConfigDefinition holds user specified config for VRS
@@ -131,9 +136,10 @@ type ClusterNetworkConfigDefinition struct {
 
 // TLSCertificates contains certificates for CNI and Monitor
 type TLSCertificates struct {
-	CA          *string
-	Certificate *string
-	PrivateKey  *string
+	CA             *string
+	Certificate    *string
+	PrivateKey     *string
+	CertificateDir *string
 }
 
 // RenderConfig container to hold config data that is passed to rendering logic

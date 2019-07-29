@@ -43,8 +43,8 @@ data:
       logLevel: 0
       # Parameters related to the nuage monitor REST server
       nuageMonServer:
-          URL: {{.MonitorConfig.MonitorAddress}}
-          certificateDirectory: {{.MonitorConfig.CertificateDir}}
+          URL: {{.MonitorConfig.RestServerAddress}}
+          certificateDirectory: {{.Certificates.CertificateDir}}
           clientCA: {{.Certificates.CA}}
           serverCertificate: {{.Certificates.Certificate}}
           serverKey: {{.Certificates.PrivateKey}}
@@ -106,8 +106,8 @@ spec:
         - name: nuage-monitor
           image: nuage/master:{{.ReleaseConfig.MonitorReleaseTag}}
           ports:
-            - containerPort: 9443
-              hostPort: 9443
+            - containerPort: {{.MonitorConfig.RestServerPort}}
+              hostPort: {{.MonitorConfig.RestServerPort}}
           command: ["/configure-master.sh"]
           args: ["ose"]
           securityContext:

@@ -2,13 +2,20 @@ package monitor
 
 import (
 	"fmt"
-	"net"
 
 	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
-var log = logf.Log.WithName("vrs_config")
+var (
+	log = logf.Log.WithName("monitor_config")
+	//DefaultResourceName is the default resource name for all resources involved in RBAC
+	DefaultResourceName = "nuage-monitor"
+	//DefaultRestServerAddress is the default rest server address
+	DefaultRestServerAddress = "0.0.0.0"
+	//DefaultRestServerPort is the default rest server port
+	DefaultRestServerPort = 9443
+)
 
 //Parse validates the Monitor config definition and fill in default values
 func Parse(config *operv1.MonitorConfigDefinition) error {
@@ -21,15 +28,20 @@ func Parse(config *operv1.MonitorConfigDefinition) error {
 }
 
 func validate(config *operv1.MonitorConfigDefinition) error {
-	if ip := net.ParseIP(config.VSDAddress); ip == nil {
+	if len(config.VSDAddress) == 0 {
 		return fmt.Errorf("invalid vsd ip address")
 	}
+
 	if config.VSDPort <= 0 {
 		return fmt.Errorf("invalid vsd port address")
 	}
 
 	if err := validateMetadata(config.VSDMetadata); err != nil {
 		return fmt.Errorf("vsd metadata validation failed: %v", err)
+	}
+
+	if config.RestServerPort < 0 {
+		return fmt.Errorf("invalid rest server port")
 	}
 	return nil
 }
@@ -56,4 +68,23 @@ func validateMetadata(m operv1.Metadata) error {
 func fillDefaults(config *operv1.MonitorConfigDefinition) {
 	//config.VSDFlags are all boolean. They default to false
 	//which we want
+	if len(config.RestServerAddress) == 0 {
+		config.RestServerAddress = DefaultRestServerAddress
+	}
+
+	if config.RestServerPort == 0 {
+		config.RestServerPort = DefaultRestServerPort
+	}
+
+	if len(config.ServiceAccountName) == 0 {
+		config.ServiceAccountName = DefaultResourceName
+	}
+
+	if len(config.ClusterRoleName) == 0 {
+		config.ClusterRoleName = DefaultResourceName
+	}
+
+	if len(config.ClusterRoleBindingName) == 0 {
+		config.ClusterRoleBindingName = DefaultResourceName
+	}
 }

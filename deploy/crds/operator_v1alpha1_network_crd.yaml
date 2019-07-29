@@ -63,6 +63,17 @@ spec:
               type: object
             monitorConfig:
               properties:
+                ClusterRoleBindingName:
+                  type: string
+                ClusterRoleName:
+                  type: string
+                ServiceAccountName:
+                  type: string
+                restServerAddress:
+                  type: string
+                restServerPort:
+                  format: int64
+                  type: integer
                 vsdAddress:
                   minLength: 1
                   type: string
@@ -108,6 +119,11 @@ spec:
               - vsdPort
               - vsdMetadata
               - vsdFlags
+              - restServerAddress
+              - restServerPort
+              - ServiceAccountName
+              - ClusterRoleName
+              - ClusterRoleBindingName
               type: object
             releaseConfig:
               properties:
