@@ -1,4 +1,4 @@
-package vrs
+package cni
 
 import (
 	"testing"

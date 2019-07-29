@@ -1,11 +1,11 @@
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: nuage-monitor
+  name: {{.MonitorConfig.RoleBindingName}}
 subjects:
 - kind: ServiceAccount
-  name: nuage-monitor
+  name: {{.MonitorConfig.ServiceAccountName}}
 roleRef:
   kind: ClusterRole
-  name: nuage-monitor
+  name: {{.MonitorConfig.RoleName}}
   apiGroup: rbac.authorization.k8s.io

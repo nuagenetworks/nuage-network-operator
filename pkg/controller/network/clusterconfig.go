@@ -18,7 +18,7 @@ import (
 var configlog = logf.Log.WithName("cluster_config")
 
 // GetClusterNetworkInfo fetches the cluster network configuration from API server
-func (r *ReconcileNetwork) GetClusterNetworkInfo(request reconcile.Request) (*operatorv1.ClusterNetworkInfo, error) {
+func (r *ReconcileNetwork) GetClusterNetworkInfo(request reconcile.Request) (*operatorv1.ClusterNetworkConfigDefinition, error) {
 	clusterConfig := &configv1.Network{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, clusterConfig)
 	if err != nil {
@@ -38,7 +38,7 @@ func (r *ReconcileNetwork) GetClusterNetworkInfo(request reconcile.Request) (*op
 		return nil, err
 	}
 
-	networkInfo := &operatorv1.ClusterNetworkInfo{
+	networkInfo := &operatorv1.ClusterNetworkConfigDefinition{
 		ClusterNetworkCIDR:         clusterConfig.Spec.ClusterNetwork[0].CIDR,
 		ServiceNetworkCIDR:         clusterConfig.Spec.ServiceNetwork[0],
 		ClusterNetworkSubnetLength: clusterConfig.Spec.ClusterNetwork[0].HostPrefix,

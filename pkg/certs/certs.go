@@ -73,6 +73,7 @@ func GenerateCertificates(config *operv1.CertGenConfig) (*operv1.TLSCertificates
 func GenerateCertificateTemplate(config *operv1.CertGenConfig) (*x509.Certificate, error) {
 	var err error
 	var notBefore time.Time
+	var notAfter time.Time
 	if len(*config.ValidFrom) == 0 {
 		notBefore = time.Now()
 	} else {
@@ -83,7 +84,11 @@ func GenerateCertificateTemplate(config *operv1.CertGenConfig) (*x509.Certificat
 		}
 	}
 
-	notAfter := notBefore.Add(config.ValidFor)
+	if len(config.ValidFor.String()) == 0 {
+		notAfter = notBefore.Add(config.ValidFor)
+	} else {
+		notAfter = notBefore.Add(365 * 24 * time.Hour)
+	}
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)

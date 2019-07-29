@@ -4,8 +4,14 @@ import (
 	"context"
 
 	operatorv1alpha1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
+	"github.com/nuagenetworks/nuage-network-operator/pkg/certs"
+	"github.com/nuagenetworks/nuage-network-operator/pkg/network/cni"
+	"github.com/nuagenetworks/nuage-network-operator/pkg/network/monitor"
+	"github.com/nuagenetworks/nuage-network-operator/pkg/network/vrs"
+	"github.com/nuagenetworks/nuage-network-operator/pkg/render"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -16,7 +22,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logf.Log.WithName("controller_network")
+var (
+	log          = logf.Log.WithName("controller_network")
+	ManifestPath = "./bindata"
+)
 
 /**
 * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
@@ -94,7 +103,7 @@ func (r *ReconcileNetwork) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, nil
 	}
 
-	// Fetch the Network instance
+	// Fetch the Nuage custom resource instance
 	instance := &operatorv1alpha1.Network{}
 	err = r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
@@ -108,5 +117,48 @@ func (r *ReconcileNetwork) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
+	if err := monitor.Parse(&instance.Spec.MonitorConfig); err != nil {
+		//invalid config passed.
+		// TODO: update the operator status to the same and dont requeue
+		return reconcile.Result{}, nil
+	}
+
+	if err := cni.Parse(&instance.Spec.CNIConfig); err != nil {
+		//invalid config passed.
+		//TODO: update the operator status to the same and dont requeue
+		return reconcile.Result{}, nil
+	}
+
+	if err := vrs.Parse(&instance.Spec.VRSConfig); err != nil {
+		//invalid config passed.
+		//TODO: update the operator status to the same and dont requeue
+		return reconcile.Result{}, nil
+	}
+
+	certificates := &operatorv1alpha1.TLSCertificates{}
+	certificates, err = certs.GenerateCertificates(&operatorv1alpha1.CertGenConfig{})
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	renderData := render.MakeRenderData(&operatorv1alpha1.RenderConfig{
+		instance.Spec,
+		"https://0.0.0.0:9443",
+		certificates,
+		clusterInfo,
+	})
+
+	var objs []*unstructured.Unstructured
+	if objs, err = render.RenderDir(ManifestPath, &renderData); err != nil {
+		//TODO: update operator status
+		return reconcile.Result{}, err
+	}
+
+	for _, obj := range objs {
+		if err := r.client.Create(context.TODO(), obj); err != nil {
+			log.Error(err, "error creating the object %v", err)
+			return reconcile.Result{}, err
+		}
+	}
 	return reconcile.Result{}, nil
 }

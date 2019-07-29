@@ -23,7 +23,9 @@ type ReleaseConfigDefinition struct {
 // MonitorConfigDefinition holds user specified config for monitor
 type MonitorConfigDefinition struct {
 	// +kubebuilder:validation:MinLength=1
-	VSDURL      string   `json:"vsdURL"`
+	VSDAddress string `json:"vsdAddress"`
+	// +kubebuilder:validation:Minimum=0
+	VSDPort     int      `json:"vsdPort"`
 	VSDMetadata Metadata `json:"vsdMetadata"`
 	VSDFlags    Flags    `json:"vsdFlags"`
 }
@@ -120,8 +122,8 @@ type NetworkList struct {
 	Items           []Network `json:"items"`
 }
 
-// ClusterNetworkInfo contains the network configuration of cluster
-type ClusterNetworkInfo struct {
+// ClusterNetworkConfigDefinition contains the network configuration of cluster
+type ClusterNetworkConfigDefinition struct {
 	ClusterNetworkCIDR         string
 	ServiceNetworkCIDR         string
 	ClusterNetworkSubnetLength uint32
@@ -132,6 +134,14 @@ type TLSCertificates struct {
 	CA          *string
 	Certificate *string
 	PrivateKey  *string
+}
+
+// RenderConfig container to hold config data that is passed to rendering logic
+type RenderConfig struct {
+	NetworkSpec
+	K8SAPIServerURL      string
+	Certificates         *TLSCertificates
+	ClusterNetworkConfig *ClusterNetworkConfigDefinition
 }
 
 // CertGenConfig certificate data for input generation

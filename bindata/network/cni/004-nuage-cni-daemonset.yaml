@@ -8,45 +8,45 @@ data:
   # This will generate the required Nuage vsp-k8s.yaml
   # config on each slave node
   plugin_yaml_config: |
-      {{with .KubeConfig}}
+      {{with .CNIConfig.KubeConfig}}
       # Path to Nuage kubeconfig
       kubeConfig: /usr/share/vsp-k8s/nuage.kubeconfig
       {{end}}
       # Name of the enterprise in which pods will reside
-      enterpriseName: {{.Enterprise}}
+      enterpriseName: {{.VSDConfig.VSDMetadata.Enterprise}}
       # Name of the domain in which pods will reside
-      domainName: {{.Domain}}
+      domainName: {{.VSDConfig.VSDMetadata.Domain}}
       # Name of the VSD user in admin group
-      vsdUser: {{.VSDUser}}
+      vsdUser: {{.VSDConfig.VSDMetadata.User}}
       # REST server URL
-      nuageMonRestServer: {{.NuageMonitorURL}}
+      nuageMonRestServer: {{.CNIConfig.NuageMonitorURL}}
       # Certificate for connecting to the kubemon REST API
-      nuageMonClientCert: {{.NuageMonClientCert}}
+      nuageMonClientCert: {{.Certificates.Certificate}}
       # Key to the certificate in restClientCert
-      nuageMonClientKey: {{.NuageMonClientKey}}
+      nuageMonClientKey: {{.Certificates.PrivateKey}}
       # CA certificate for verifying the master's rest server
-      nuageMonServerCA: {{.NuageMonClientCA}}
+      nuageMonServerCA: {{.Certificates.CA}}
       # Nuage vport mtu size
-      interfaceMTU: {{.InterfaceMTU}}
+      interfaceMTU: {{.CNIConfig.MTU}}
       # Service CIDR
-      serviceCIDR: {{.ServiceNetworkCIDR}}
+      serviceCIDR: {{.ClusterNetworkConfig.ServiceNetworkCIDR}}
       # Logging level for the plugin
       # allowed options are: "dbg", "info", "warn", "err", "emer", "off"
-      logLevel: {{.LogLevel}}
+      logLevel: {{.CNIConfig.LogLevel}}
 
   # This will generate the required Nuage CNI yaml configuration
   cni_yaml_config: |
-      vrsendpoint: {{.VRSSocketFile}}
-      vrsbridge: {{.VRSBridge}}
-      monitorinterval: {{.MonitorInterval}}
-      cniversion: {{.CNIVersion}}
-      loglevel: {{.LogLevel}}
-      portresolvetimer: {{.PortResolveTimer}}
-      logfilesize: {{.LogFileSize}}
-      vrsconnectionchecktimer: {{.VRSConnectionTimer}}
-      mtu: {{.InteraceMTU}}
-      staleentrytimeout: {{.StaleEntryTimeout}}
-      nuagesiteid: {{.NuageSiteID}}
+      vrsendpoint: {{.CNIConfig.VRSSocketFile}}
+      vrsbridge: {{.CNIConfig.VRSBridge}}
+      monitorinterval: {{.CNIConfig.MonitorInterval}}
+      cniversion: {{.CNIConfig.CNIVersion}}
+      loglevel: {{.CNIConfig.LogLevel}}
+      portresolvetimer: {{.CNIConfig.PortResolveTimer}}
+      logfilesize: {{.CNIConfig.LogFileSize}}
+      vrsconnectionchecktimer: {{.CNIConfig.VRSConnectionCheckTimer}}
+      mtu: {{.CNIConfig.MTU}}
+      staleentrytimeout: {{.CNIConfig.StaleEntryTimeout}}
+      nuagesiteid: {{.CNIConfig.NuageSiteID}}
 
 ---
 
@@ -75,12 +75,12 @@ spec:
         - key: node-role.kubernetes.io/master
           effect: NoSchedule
           operator: Exists
-      serviceAccoutName: {{.CNIServiceAccountName}}
+      serviceAccoutName: {{.ServiceAccountNames.CNIServiceAccountName}}
       containers:
         # This container installs Nuage CNI binaries
         # and CNI network config file on each node.
         - name: nuage-cni
-          image: nuage/cni:{{.CNIReleaseTag}}
+          image: nuage/cni:{{.ReleaseConfig.CNIReleaseTag}}
           command: ["/install-cni.sh"]
           args: ["nuage-cni-k8s"]
           securityContext:
@@ -105,10 +105,10 @@ spec:
                   key: cni_yaml_config
             # Nuage cluster network CIDR for iptables configuration
             - name: NUAGE_CLUSTER_NW_CIDR
-              value: {{.ClusterNetworkCIDR}}
+              value: {{.ClusterNetworkConfig.ClusterNetworkCIDR}}
             # Kubernetes Master api-server URL
             - name: MASTER_API_SERVER_URL
-              value: {{.K8SApiServerURL}}
+              value: {{.K8SAPIServerURL}}
           volumeMounts:
             - mountPath: /host/opt
               name: cni-bin-dir

@@ -63,6 +63,9 @@ spec:
               type: object
             monitorConfig:
               properties:
+                vsdAddress:
+                  minLength: 1
+                  type: string
                 vsdFlags:
                   properties:
                     autoScaleSubnets:
@@ -96,11 +99,13 @@ spec:
                   - userCert
                   - userKey
                   type: object
-                vsdURL:
-                  minLength: 1
-                  type: string
+                vsdPort:
+                  format: int64
+                  minimum: 0
+                  type: integer
               required:
-              - vsdURL
+              - vsdAddress
+              - vsdPort
               - vsdMetadata
               - vsdFlags
               type: object

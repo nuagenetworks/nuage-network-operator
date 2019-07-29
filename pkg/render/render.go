@@ -12,19 +12,24 @@ import (
 	"github.com/Masterminds/sprig"
 	"github.com/pkg/errors"
 
+	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
+// RenderData holds the render data to be configured
 type RenderData struct {
-	Funcs template.FuncMap
-	Data  map[string]interface{}
+	Funcs  template.FuncMap
+	Data   map[string]interface{}
+	Config *operv1.RenderConfig
 }
 
-func MakeRenderData() RenderData {
+// MakeRenderData initializes render data structure
+func MakeRenderData(c *operv1.RenderConfig) RenderData {
 	return RenderData{
-		Funcs: template.FuncMap{},
-		Data:  map[string]interface{}{},
+		Funcs:  template.FuncMap{},
+		Data:   make(map[string]interface{}),
+		Config: c,
 	}
 }
 
