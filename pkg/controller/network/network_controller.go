@@ -122,6 +122,15 @@ func (r *ReconcileNetwork) Reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	//TODO: Get the previous config
+	isUpdate := true
+	if rc, err := r.GetReleaseConfig(); err == nil && rc == nil {
+		isUpdate = false
+	} else {
+		if err != nil {
+			log.Error(err, "getting release config failed")
+			return reconcile.Result{}, err
+		}
+	}
 
 	apiServer, err = buildAPIServerURL()
 	if err != nil {
@@ -167,12 +176,24 @@ func (r *ReconcileNetwork) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	//Create the objects against API server
+	//Create or update the objects against API server
 	for _, obj := range objs {
-		if err := r.client.Create(context.TODO(), obj); err != nil {
-			log.Error(err, "error creating the object %v", err)
-			return reconcile.Result{}, err
+		if isUpdate {
+			if err := r.client.Update(context.TODO(), obj); err != nil {
+				log.Error(err, "error updating the object %v", err)
+				return reconcile.Result{}, err
+			}
+		} else {
+			if err := r.client.Create(context.TODO(), obj); err != nil {
+				log.Error(err, "error creating the object %v", err)
+				return reconcile.Result{}, err
+			}
 		}
+	}
+
+	if err := r.SetReleaseConfig(&instance.Spec.ReleaseConfig); err != nil {
+		log.Error(err, "saving the release config failed")
+		return reconcile.Result{}, err
 	}
 	return reconcile.Result{}, nil
 }
