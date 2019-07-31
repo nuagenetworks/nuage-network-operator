@@ -2,6 +2,8 @@ package network
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	operatorv1alpha1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/certs"
@@ -90,6 +92,7 @@ type ReconcileNetwork struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileNetwork) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	var apiServer string
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling Network")
 
@@ -116,6 +119,14 @@ func (r *ReconcileNetwork) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
+	}
+
+	//TODO: Get the previous config
+
+	apiServer, err = buildAPIServerURL()
+	if err != nil {
+		reqLogger.Error(err, "failed to get api server url")
+		return reconcile.Result{}, nil
 	}
 
 	if err := monitor.Parse(&instance.Spec.MonitorConfig); err != nil {
@@ -145,7 +156,7 @@ func (r *ReconcileNetwork) Reconcile(request reconcile.Request) (reconcile.Resul
 	//Render the templates and get the objects
 	renderData := render.MakeRenderData(&operatorv1alpha1.RenderConfig{
 		instance.Spec,
-		"https://0.0.0.0:9443",
+		apiServer,
 		certificates,
 		clusterInfo,
 	})
@@ -164,4 +175,13 @@ func (r *ReconcileNetwork) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 	}
 	return reconcile.Result{}, nil
+}
+
+func buildAPIServerURL() (string, error) {
+	host, port := os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT")
+	if len(host) == 0 || len(port) == 0 {
+		return "", fmt.Errorf("neither kubernetes service host nor service port can be empty")
+	}
+
+	return "https://" + host + "/" + port, nil
 }

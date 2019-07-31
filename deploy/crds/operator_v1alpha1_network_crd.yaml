@@ -31,7 +31,13 @@ spec:
           properties:
             cniConfig:
               properties:
+                clusterRoleBindingName:
+                  type: string
+                clusterRoleName:
+                  type: string
                 cniVersion:
+                  type: string
+                kubeConfig:
                   type: string
                 logFileSize:
                   format: int64
@@ -44,12 +50,16 @@ spec:
                 mtu:
                   format: int64
                   type: integer
+                nuageMonitorURL:
+                  type: string
                 nuageSiteID:
                   format: int64
                   type: integer
                 portResolveTimer:
                   format: int64
                   type: integer
+                serviceAccountName:
+                  type: string
                 staleEntryTimeout:
                   format: int64
                   type: integer
@@ -119,11 +129,6 @@ spec:
               - vsdPort
               - vsdMetadata
               - vsdFlags
-              - restServerAddress
-              - restServerPort
-              - ServiceAccountName
-              - ClusterRoleName
-              - ClusterRoleBindingName
               type: object
             releaseConfig:
               properties:
