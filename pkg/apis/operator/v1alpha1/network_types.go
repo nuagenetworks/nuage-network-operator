@@ -46,6 +46,8 @@ type VRSConfigDefinition struct {
 
 // CNIConfigDefinition holds user specified config for CNI
 type CNIConfigDefinition struct {
+	// +kubebuilder:validation:MinLength=1
+	LoadBalancerURL         string `json:"loadBalancerURL"`
 	VRSEndpoint             string `json:"vrsEndpoint,omitempty"`
 	VRSBridge               string `json:"vrsBridge,omitempty"`
 	CNIVersion              string `json:"cniVersion,omitempty"`
@@ -60,7 +62,6 @@ type CNIConfigDefinition struct {
 	ServiceAccountName      string `json:"serviceAccountName,omitempty"`
 	ClusterRoleName         string `json:"clusterRoleName,omitempty"`
 	ClusterRoleBindingName  string `json:"clusterRoleBindingName,omitempty"`
-	NuageMonitorURL         string `json:"nuageMonitorURL,omitempty"`
 	KubeConfig              string `json:"kubeConfig,omitempty"`
 }
 
@@ -80,9 +81,10 @@ type Metadata struct {
 
 // Flags hold the flags for VSD behaviors
 type Flags struct {
-	UnderlayEnabled  bool `json:"underlayEnabled,omitempty"`
-	StatsEnabled     bool `json:"statsEnabled,omitempty"`
-	AutoScaleSubnets bool `json:"autoScaleSubnets,omitempty"`
+	EncryptionEnabled bool `json:"encryptionEnabled,omitempty"`
+	UnderlayEnabled   bool `json:"underlayEnabled,omitempty"`
+	StatsEnabled      bool `json:"statsEnabled,omitempty"`
+	AutoScaleSubnets  bool `json:"autoScaleSubnets,omitempty"`
 }
 
 // RegistryConfig holds the registry information

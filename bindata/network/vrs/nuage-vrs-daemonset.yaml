@@ -1,7 +1,7 @@
 # This manifest installs Nuage VRS on
 # each worker node in a Kubernetes cluster.
 kind: DaemonSet
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 metadata:
   name: nuage-vrs
   namespace: kube-system
@@ -27,25 +27,25 @@ spec:
         # This container installs Nuage VRS running as a
         # container on each worker node
         - name: nuage-vrs
-          image: nuage/vrs:{{.ReleaseConfig.VRSReleaseTag}}
+          image: nuage/vrs:{{.ReleaseConfig.VRSTag}}
           securityContext:
             privileged: true
           env:
             # Configure parameters for VRS openvswitch file
             - name: NUAGE_ACTIVE_CONTROLLER
-              value: {{.VRSConfig.Controllers[0]}}
+              value: "{{index .VRSConfig.Controllers 0}}"
               {{if (eq (len .VRSConfig.Controllers) 2)}}
             - name: NUAGE_STANDBY_CONTROLLER
-              value: {{.VRSConfig.Controllers[1]}}
+              value: "{{index .VRSConfig.Controllers 1}}"
               {{end}}
             - name: NUAGE_PLATFORM
-              value: {{.VRSConfig.Platform}}
+              value: "{{.VRSConfig.Platform}}"
             - name: NUAGE_K8S_SERVICE_IPV4_SUBNET
-              value: {{.ClusterNetworkConfig.ServiceNetworkCIDR}}
+              value: "{{.ClusterNetworkConfig.ServiceNetworkCIDR}}"
             - name: NUAGE_K8S_POD_NETWORK_CIDR
-              value: {{.ClusterNetworkConfig.ClusterNetworkCIDR}}
+              value: "{{.ClusterNetworkConfig.ClusterNetworkCIDR}}"
             - name: NUAGE_NETWORK_UPLINK_INTF
-              value: {{.VRSConfig.UnderlayUplink}}
+              value: "{{.VRSConfig.UnderlayUplink}}"
           volumeMounts:
             - mountPath: /var/run
               name: vrs-run-dir

@@ -20,6 +20,8 @@ var certlog = logf.Log.WithName("certs")
 
 // GenerateCertificates generate certs for client server authentication
 func GenerateCertificates(config *operv1.CertGenConfig) (*operv1.TLSCertificates, error) {
+	fillDefaults(config)
+
 	priv, err := GeneratePrivateKey(config)
 	if err != nil {
 		certlog.Error(err, "private key generation failed")
@@ -74,6 +76,9 @@ func GenerateCertificateTemplate(config *operv1.CertGenConfig) (*x509.Certificat
 	var err error
 	var notBefore time.Time
 	var notAfter time.Time
+
+	fillDefaults(config)
+
 	if len(*config.ValidFrom) == 0 {
 		notBefore = time.Now()
 	} else {
@@ -85,9 +90,9 @@ func GenerateCertificateTemplate(config *operv1.CertGenConfig) (*x509.Certificat
 	}
 
 	if len(config.ValidFor.String()) == 0 {
-		notAfter = notBefore.Add(config.ValidFor)
-	} else {
 		notAfter = notBefore.Add(365 * 24 * time.Hour)
+	} else {
+		notAfter = notBefore.Add(config.ValidFor)
 	}
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
@@ -119,6 +124,9 @@ func GeneratePrivateKey(config *operv1.CertGenConfig) (interface{}, error) {
 
 	var priv interface{}
 	var err error
+
+	fillDefaults(config)
+
 	switch *config.ECDSACurve {
 	case "":
 		fallthrough
@@ -169,5 +177,20 @@ func pemBlockForKey(priv interface{}) (*pem.Block, error) {
 		return &pem.Block{Type: "EC PRIVATE KEY", Bytes: b}, nil
 	default:
 		return nil, fmt.Errorf("unknown key type passed")
+	}
+}
+
+func fillDefaults(config *operv1.CertGenConfig) {
+	curve := "rsa"
+	validFrom := ""
+
+	if config.RSABits == 0 {
+		config.RSABits = 2048
+	}
+	if config.ECDSACurve == nil {
+		config.ECDSACurve = &curve
+	}
+	if config.ValidFrom == nil {
+		config.ValidFrom = &validFrom
 	}
 }

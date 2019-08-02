@@ -39,6 +39,9 @@ spec:
                   type: string
                 kubeConfig:
                   type: string
+                loadBalancerURL:
+                  minLength: 1
+                  type: string
                 logFileSize:
                   format: int64
                   type: integer
@@ -50,8 +53,6 @@ spec:
                 mtu:
                   format: int64
                   type: integer
-                nuageMonitorURL:
-                  type: string
                 nuageSiteID:
                   format: int64
                   type: integer
@@ -70,6 +71,8 @@ spec:
                   type: integer
                 vrsEndpoint:
                   type: string
+              required:
+              - loadBalancerURL
               type: object
             monitorConfig:
               properties:
@@ -90,6 +93,8 @@ spec:
                 vsdFlags:
                   properties:
                     autoScaleSubnets:
+                      type: boolean
+                    encryptionEnabled:
                       type: boolean
                     statsEnabled:
                       type: boolean

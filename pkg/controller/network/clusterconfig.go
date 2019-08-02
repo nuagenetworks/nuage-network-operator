@@ -6,21 +6,22 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	operatorv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
+	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/names"
 	iputil "github.com/nuagenetworks/nuage-network-operator/pkg/util/ip"
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 var configlog = logf.Log.WithName("cluster_config")
 
 // GetClusterNetworkInfo fetches the cluster network configuration from API server
-func (r *ReconcileNetwork) GetClusterNetworkInfo(request reconcile.Request) (*operatorv1.ClusterNetworkConfigDefinition, error) {
+func (r *ReconcileNetwork) GetClusterNetworkInfo(request reconcile.Request) (*operv1.ClusterNetworkConfigDefinition, error) {
 	clusterConfig := &configv1.Network{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, clusterConfig)
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "network"}, clusterConfig)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -38,7 +39,7 @@ func (r *ReconcileNetwork) GetClusterNetworkInfo(request reconcile.Request) (*op
 		return nil, err
 	}
 
-	networkInfo := &operatorv1.ClusterNetworkConfigDefinition{
+	networkInfo := &operv1.ClusterNetworkConfigDefinition{
 		ClusterNetworkCIDR:         clusterConfig.Spec.ClusterNetwork[0].CIDR,
 		ServiceNetworkCIDR:         clusterConfig.Spec.ServiceNetwork[0],
 		ClusterNetworkSubnetLength: clusterConfig.Spec.ClusterNetwork[0].HostPrefix,
@@ -53,7 +54,7 @@ func ValidateClusterConfig(clusterConfig configv1.NetworkSpec) error {
 
 	if len(clusterConfig.ServiceNetwork) != 1 {
 		// Right now we only support a single service network
-		return errors.Errorf("spec.serviceNetwork must be exactly one network")
+		return errors.Errorf("spec.serviceNetwork must have only one entry")
 	}
 	for _, snet := range clusterConfig.ServiceNetwork {
 		_, cidr, err := net.ParseCIDR(snet)
@@ -65,11 +66,9 @@ func ValidateClusterConfig(clusterConfig configv1.NetworkSpec) error {
 		}
 	}
 
-	// validate clusternetwork
-	// - has an entry
-	// - it is a valid ip
-	// - has a reasonable cidr
-	// - they do not overlap and do not overlap with the service cidr
+	if len(clusterConfig.ClusterNetwork) != 1 {
+		return errors.Errorf("spec.clusterNetwork must have only one entry")
+	}
 	for _, cnet := range clusterConfig.ClusterNetwork {
 		_, cidr, err := net.ParseCIDR(cnet.CIDR)
 		if err != nil {
@@ -90,12 +89,8 @@ func ValidateClusterConfig(clusterConfig configv1.NetworkSpec) error {
 		}
 	}
 
-	if len(clusterConfig.ClusterNetwork) != 1 {
-		return errors.Errorf("spec.clusterNetwork must have 1 entry")
-	}
-
 	if clusterConfig.NetworkType != names.NuageSDN {
-		return errors.Errorf("spec.networkType is not supported")
+		return errors.Errorf("spec.networkType \"%s\"is not supported", clusterConfig.NetworkType)
 	}
 
 	return nil

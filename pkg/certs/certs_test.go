@@ -30,8 +30,8 @@ func TestGeneratePrivateKey(t *testing.T) {
 	config.RSABits = 0
 	config.ECDSACurve = &curve
 	priv, err := GeneratePrivateKey(config)
-	g.Expect(err).To(HaveOccurred())
-	g.Expect(priv).To(BeNil())
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(priv).ToNot(BeNil())
 }
 
 func TestGenerateCertificateTemplate(t *testing.T) {
@@ -65,6 +65,13 @@ func TestGenerateCertificates(t *testing.T) {
 
 	c, err := GenerateCertificates(config)
 	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(len(*c.CA)).ShouldNot(BeZero())
+	g.Expect(len(*c.Certificate)).ShouldNot(BeZero())
+	g.Expect(len(*c.PrivateKey)).ShouldNot(BeZero())
+
+	config2 := &operv1.CertGenConfig{}
+	c, err = GenerateCertificates(config2)
+	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(len(*c.CA)).ShouldNot(BeZero())
 	g.Expect(len(*c.Certificate)).ShouldNot(BeZero())
 	g.Expect(len(*c.PrivateKey)).ShouldNot(BeZero())

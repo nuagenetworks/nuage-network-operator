@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	operatorv1alpha1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
+	log "github.com/Sirupsen/logrus"
+	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/certs"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/network/cni"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/network/monitor"
@@ -20,12 +21,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 var (
-	log = logf.Log.WithName("controller_network")
 	//ManifestPath is the path to templates directory
 	ManifestPath = "./bindata"
 )
@@ -55,7 +54,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource Network
-	err = c.Watch(&source.Kind{Type: &operatorv1alpha1.Network{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &operv1.Network{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
@@ -64,7 +63,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Watch for changes to secondary resource Pods and requeue the owner Network
 	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &operatorv1alpha1.Network{},
+		OwnerType:    &operv1.Network{},
 	})
 	if err != nil {
 		return err
@@ -86,29 +85,27 @@ type ReconcileNetwork struct {
 
 // Reconcile reads that state of the cluster for a Network object and makes changes based on the state read
 // and what is in the Network.Spec
-// TODO(user): Modify this Reconcile function to implement your Controller logic.  This example creates
-// a Pod as an example
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileNetwork) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	var apiServer string
-	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
-	reqLogger.Info("Reconciling Network")
+	log.SetLevel(log.DebugLevel)
+	log.Infof("Reconciling Network")
 
 	clusterInfo, err := r.GetClusterNetworkInfo(request)
 	if err != nil {
-		reqLogger.Error(err, "failed to get cluster network config")
+		log.Errorf("failed to get cluster network config %v", err)
 		return reconcile.Result{}, err
 	}
 
 	if clusterInfo == nil {
-		reqLogger.Info("could not find network config. object must have been deleted")
+		log.Infof("could not find network config. object must have been deleted")
 		return reconcile.Result{}, nil
 	}
 
 	// Fetch the Nuage custom resource instance
-	instance := &operatorv1alpha1.Network{}
+	instance := &operv1.Network{}
 	err = r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -127,43 +124,55 @@ func (r *ReconcileNetwork) Reconcile(request reconcile.Request) (reconcile.Resul
 		isUpdate = false
 	} else {
 		if err != nil {
-			log.Error(err, "getting release config failed")
+			log.Errorf("getting release config failed %v", err)
 			return reconcile.Result{}, err
+		}
+		if p, _ := r.IsDiffConfig(rc, &instance.Spec.ReleaseConfig); p == 0 {
+			log.Warnf("no config differences found. skipping reconcile")
+			return reconcile.Result{}, nil
 		}
 	}
 
+	log.Debugf("cluster network %v\n", clusterInfo)
+	log.Debugf("operator network %v\n", instance)
+	log.Debugf("%v\n", isUpdate)
+
 	apiServer, err = buildAPIServerURL()
 	if err != nil {
-		reqLogger.Error(err, "failed to get api server url")
-		return reconcile.Result{}, nil
+		log.Errorf("failed to get api server url %v", err)
+		return reconcile.Result{}, err
 	}
 
 	if err := monitor.Parse(&instance.Spec.MonitorConfig); err != nil {
 		//invalid config passed.
 		// TODO: update the operator status to the same and dont requeue
-		return reconcile.Result{}, nil
+		log.Errorf("failed to parse monitor config %v", err)
+		return reconcile.Result{}, err
 	}
 
 	if err := cni.Parse(&instance.Spec.CNIConfig); err != nil {
 		//invalid config passed.
 		//TODO: update the operator status to the same and dont requeue
-		return reconcile.Result{}, nil
+		log.Errorf("failed to parse cni config %v", err)
+		return reconcile.Result{}, err
 	}
 
 	if err := vrs.Parse(&instance.Spec.VRSConfig); err != nil {
 		//invalid config passed.
 		//TODO: update the operator status to the same and dont requeue
-		return reconcile.Result{}, nil
+		log.Errorf("failed to parse vrs config %v", err)
+		return reconcile.Result{}, err
 	}
 
-	certificates := &operatorv1alpha1.TLSCertificates{}
-	certificates, err = certs.GenerateCertificates(&operatorv1alpha1.CertGenConfig{})
+	certificates := &operv1.TLSCertificates{}
+	certificates, err = certs.GenerateCertificates(&operv1.CertGenConfig{})
 	if err != nil {
+		log.Errorf("failed to generate certs %v", err)
 		return reconcile.Result{}, err
 	}
 
 	//Render the templates and get the objects
-	renderData := render.MakeRenderData(&operatorv1alpha1.RenderConfig{
+	renderData := render.MakeRenderData(&operv1.RenderConfig{
 		instance.Spec,
 		apiServer,
 		certificates,
@@ -173,6 +182,7 @@ func (r *ReconcileNetwork) Reconcile(request reconcile.Request) (reconcile.Resul
 	var objs []*unstructured.Unstructured
 	if objs, err = render.RenderDir(ManifestPath, &renderData); err != nil {
 		//TODO: update operator status
+		log.Errorf("failed to render templates %v", err)
 		return reconcile.Result{}, err
 	}
 
@@ -180,19 +190,19 @@ func (r *ReconcileNetwork) Reconcile(request reconcile.Request) (reconcile.Resul
 	for _, obj := range objs {
 		if isUpdate {
 			if err := r.client.Update(context.TODO(), obj); err != nil {
-				log.Error(err, "error updating the object %v", err)
+				log.Errorf("error updating the object %v", err)
 				return reconcile.Result{}, err
 			}
 		} else {
 			if err := r.client.Create(context.TODO(), obj); err != nil {
-				log.Error(err, "error creating the object %v", err)
+				log.Errorf("error creating the object %v", err)
 				return reconcile.Result{}, err
 			}
 		}
 	}
 
 	if err := r.SetReleaseConfig(&instance.Spec.ReleaseConfig); err != nil {
-		log.Error(err, "saving the release config failed")
+		log.Errorf("saving the release config failed %v", err)
 		return reconcile.Result{}, err
 	}
 	return reconcile.Result{}, nil
@@ -204,5 +214,5 @@ func buildAPIServerURL() (string, error) {
 		return "", fmt.Errorf("neither kubernetes service host nor service port can be empty")
 	}
 
-	return "https://" + host + "/" + port, nil
+	return "https://" + host + ":" + port, nil
 }

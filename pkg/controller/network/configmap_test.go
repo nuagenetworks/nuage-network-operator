@@ -56,3 +56,30 @@ func TestGet(t *testing.T) {
 	g.Expect(rc).To(BeNil())
 
 }
+
+func TestIsDiffConfig(t *testing.T) {
+	g := NewGomegaWithT(t)
+
+	r := &ReconcileNetwork{
+		client: fake.NewFakeClient(),
+	}
+
+	prev := &operv1.ReleaseConfigDefinition{}
+	curr := &operv1.ReleaseConfigDefinition{}
+
+	p, err := r.IsDiffConfig(prev, curr)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(p).To(Equal(0))
+
+	prev.CNITag = "0.0.0"
+	curr.CNITag = "0.0.1"
+	p, err = r.IsDiffConfig(prev, curr)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(p).To(Equal(-1))
+
+	prev.CNITag = "0.0.1"
+	curr.CNITag = "0.0.0"
+	p, err = r.IsDiffConfig(prev, curr)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(p).To(Equal(1))
+}

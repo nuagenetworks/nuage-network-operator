@@ -10,9 +10,8 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
-	"github.com/pkg/errors"
-
 	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
+	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
@@ -20,7 +19,6 @@ import (
 // RenderData holds the render data to be configured
 type RenderData struct {
 	Funcs  template.FuncMap
-	Data   map[string]interface{}
 	Config *operv1.RenderConfig
 }
 
@@ -28,7 +26,6 @@ type RenderData struct {
 func MakeRenderData(c *operv1.RenderConfig) RenderData {
 	return RenderData{
 		Funcs:  template.FuncMap{},
-		Data:   make(map[string]interface{}),
 		Config: c,
 	}
 }
@@ -73,7 +70,7 @@ func RenderTemplate(path string, d *RenderData) ([]*unstructured.Unstructured, e
 	}
 
 	// Add universal functions
-	tmpl.Funcs(template.FuncMap{"getOr": getOr, "isSet": isSet})
+	tmpl.Funcs(template.FuncMap{"getOr": getOr, "isSet": isSet, "boolToInt": boolToInt})
 	tmpl.Funcs(sprig.TxtFuncMap())
 
 	source, err := ioutil.ReadFile(path)
@@ -92,6 +89,7 @@ func RenderTemplate(path string, d *RenderData) ([]*unstructured.Unstructured, e
 
 	out := []*unstructured.Unstructured{}
 
+	//logrus.Debugf("%s\n", rendered.String())
 	// special case - if the entire file is whitespace, skip
 	if len(strings.TrimSpace(rendered.String())) == 0 {
 		return out, nil

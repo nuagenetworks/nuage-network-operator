@@ -10,7 +10,9 @@ import (
 func TestParse(t *testing.T) {
 	g := NewGomegaWithT(t)
 
-	c := &operv1.CNIConfigDefinition{}
+	c := &operv1.CNIConfigDefinition{
+		LoadBalancerURL: "https://127.0.0.1:9443",
+	}
 
 	err := Parse(c)
 	g.Expect(err).To(BeNil())
@@ -35,4 +37,9 @@ func TestParse(t *testing.T) {
 	err = Parse(c)
 	g.Expect(err).ShouldNot(HaveOccurred())
 	g.Expect(c.ServiceAccountName).To(Equal(DefaultResourceName))
+
+	c.LoadBalancerURL = ""
+	err = Parse(c)
+	g.Expect(err).Should(HaveOccurred())
+	g.Expect(err.Error()).Should(ContainSubstring("load balancer url cannot be empty"))
 }

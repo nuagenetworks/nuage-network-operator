@@ -1,6 +1,7 @@
 package network
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 
@@ -73,4 +74,21 @@ func (r *ReconcileNetwork) SetReleaseConfig(c *operv1.ReleaseConfigDefinition) e
 	}
 
 	return nil
+}
+
+//IsDiffConfig return 0 if both the configs are same
+func (r *ReconcileNetwork) IsDiffConfig(prev, curr *operv1.ReleaseConfigDefinition) (int, error) {
+	var s1, s2 []byte
+	var err error
+
+	s1, err = json.Marshal(prev)
+	if err != nil {
+		return -1, err
+	}
+	s2, err = json.Marshal(curr)
+	if err != nil {
+		return -1, err
+	}
+
+	return bytes.Compare(s1, s2), err
 }

@@ -28,3 +28,10 @@ func isSet(m map[string]interface{}, key string) interface{} {
 	}
 	return val
 }
+
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}

@@ -50,6 +50,12 @@
   revision = "de5bf2ad457846296e2031421a34e2568e304e35"
 
 [[projects]]
+  name = "github.com/Sirupsen/logrus"
+  packages = ["."]
+  revision = "839c75faf7f98a33d445d181f3018b5c3409a45e"
+  version = "v1.4.2"
+
+[[projects]]
   name = "github.com/appscode/jsonpatch"
   packages = ["."]
   revision = "7c0e3b262f30165a8ec3d0b4c6059fd92703bfb2"
@@ -230,6 +236,12 @@
   version = "v1.1.6"
 
 [[projects]]
+  name = "github.com/konsorten/go-windows-terminal-sequences"
+  packages = ["."]
+  revision = "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
+  version = "v1.0.2"
+
+[[projects]]
   branch = "master"
   name = "github.com/mailru/easyjson"
   packages = ["buffer","jlexer","jwriter"]
@@ -268,7 +280,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/openshift/api"
-  packages = ["config/v1","operator/v1"]
+  packages = ["config/v1","operator/v1","route/v1"]
   revision = "9525304a0adb725ab4a4a54539a1a6bf6cc343d3"
 
 [[projects]]
@@ -532,6 +544,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "91e749a6f0a86edcfa36f64a72f93f55ed465ad472387b74640f3bb399c1045d"
+  inputs-digest = "4f5108cdad37fd88c4a54d0127fdba5ee66f90c0a618cfbe62b73480634455cc"
   solver-name = "gps-cdcl"
   solver-version = 1

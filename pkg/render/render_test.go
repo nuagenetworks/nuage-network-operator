@@ -74,18 +74,21 @@ func TestTemplate(t *testing.T) {
 	// Set expected function (but not variable)
 	d.Funcs["fname"] = func(s string) string { return "test-" + s }
 	_, err = RenderTemplate(p, &d)
-	g.Expect(err).To(HaveOccurred())
-	g.Expect(err.Error()).To(HaveSuffix(`has no entry for key "Namespace"`))
+	g.Expect(err).ToNot(HaveOccurred())
 
 	// now we can render
-	d.Data["Namespace"] = "myns"
+	c.K8SAPIServerURL = "myns"
 	o, err := RenderTemplate(p, &d)
 	g.Expect(err).NotTo(HaveOccurred())
 
 	g.Expect(o[0].GetName()).To(Equal("test-podname"))
 	g.Expect(o[0].GetNamespace()).To(Equal("myns"))
-	g.Expect(o[0].Object["foo"]).To(Equal("fallback"))
-	g.Expect(o[0].Object["bar"]).To(Equal("myns"))
+
+	var q int64
+	q = 1
+	g.Expect(o[0].Object["good"]).To(Equal(q))
+	q = 0
+	g.Expect(o[0].Object["bad"]).To(Equal(q))
 }
 
 func TestRenderDir(t *testing.T) {
@@ -93,8 +96,8 @@ func TestRenderDir(t *testing.T) {
 
 	d := MakeRenderData(c)
 	d.Funcs["fname"] = func(s string) string { return s }
-	d.Data["Namespace"] = "myns"
-	d.Data["Images"] = []string{"b1", "b2"}
+	c.K8SAPIServerURL = "myns"
+	c.VRSConfig.Controllers = []string{"b1", "b2"}
 
 	o, err := RenderDir("testdata", &d)
 	g.Expect(err).NotTo(HaveOccurred())
@@ -106,8 +109,8 @@ func TestRenderDirOrder(t *testing.T) {
 
 	d := MakeRenderData(c)
 	d.Funcs["fname"] = func(s string) string { return s }
-	d.Data["Namespace"] = "myns"
-	d.Data["Images"] = []string{"b1", "b2"}
+	c.K8SAPIServerURL = "myns"
+	c.VRSConfig.Controllers = []string{"b1", "b2"}
 
 	o, err := RenderDir("testdata", &d)
 	g.Expect(err).NotTo(HaveOccurred())
@@ -127,15 +130,15 @@ func TestRenderFile(t *testing.T) {
 	p := "testdata/array.yaml"
 	d := MakeRenderData(c)
 	d.Funcs["fname"] = func(s string) string { return s }
-	d.Data["Namespace"] = "myns"
-	d.Data["Images"] = []string{"b1", "b2"}
+	c.K8SAPIServerURL = "myns"
+	c.VRSConfig.Controllers = []string{"b1", "b2"}
 	o, err := RenderTemplate(p, &d)
 	g.Expect(err).NotTo(HaveOccurred())
 
 	g.Expect(o[0].GetName()).To(Equal("test-podname"))
 	g.Expect(o[0].GetNamespace()).To(Equal("myns"))
 
-	d.Data["Images"] = []string{"b1"}
+	c.VRSConfig.Controllers = []string{"b1"}
 	o, err = RenderTemplate(p, &d)
 	g.Expect(err).NotTo(HaveOccurred())
 

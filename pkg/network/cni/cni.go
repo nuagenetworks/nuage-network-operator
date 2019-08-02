@@ -54,6 +54,9 @@ func validate(config *operv1.CNIConfigDefinition) error {
 	if config.NuageSiteID > 0 {
 		return fmt.Errorf("non negative values of site id is not supported")
 	}
+	if len(config.LoadBalancerURL) == 0 {
+		return fmt.Errorf("load balancer url cannot be empty")
+	}
 	return nil
 }
 
