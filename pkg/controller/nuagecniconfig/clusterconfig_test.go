@@ -1,4 +1,4 @@
-package network
+package nuagecniconfig
 
 import (
 	"context"
@@ -22,7 +22,7 @@ func TestGetClusterConfig(t *testing.T) {
 	osv1.Install(s)
 	s.AddKnownTypes(configv1.SchemeGroupVersion, &configv1.Network{})
 
-	r := &ReconcileNetwork{
+	r := &ReconcileNuageCNIConfig{
 		client: fake.NewFakeClient(),
 	}
 
@@ -57,7 +57,7 @@ func TestGetClusterConfig(t *testing.T) {
 func TestValidateClusterConfig(t *testing.T) {
 	g := NewGomegaWithT(t)
 
-	//	r := &ReconcileNetwork{
+	//	r := &ReconcileNuageCNIConfig{
 	//		client: fake.NewFakeClient(),
 	//	}
 

@@ -11,17 +11,17 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.Network":       schema_pkg_apis_operator_v1alpha1_Network(ref),
-		"github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.NetworkSpec":   schema_pkg_apis_operator_v1alpha1_NetworkSpec(ref),
-		"github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.NetworkStatus": schema_pkg_apis_operator_v1alpha1_NetworkStatus(ref),
+		"github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.NuageCNIConfig":       schema_pkg_apis_operator_v1alpha1_NuageCNIConfig(ref),
+		"github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.NuageCNIConfigSpec":   schema_pkg_apis_operator_v1alpha1_NuageCNIConfigSpec(ref),
+		"github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.NuageCNIConfigStatus": schema_pkg_apis_operator_v1alpha1_NuageCNIConfigStatus(ref),
 	}
 }
 
-func schema_pkg_apis_operator_v1alpha1_Network(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_operator_v1alpha1_NuageCNIConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Network is the Schema for the networks API",
+				Description: "NuageCNIConfig is the Schema for the networks API",
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
@@ -44,27 +44,27 @@ func schema_pkg_apis_operator_v1alpha1_Network(ref common.ReferenceCallback) com
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.NetworkSpec"),
+							Ref: ref("github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.NuageCNIConfigSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.NetworkStatus"),
+							Ref: ref("github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.NuageCNIConfigStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.NetworkSpec", "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.NetworkStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.NuageCNIConfigSpec", "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.NuageCNIConfigStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_operator_v1alpha1_NetworkSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_operator_v1alpha1_NuageCNIConfigSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "NetworkSpec defines the desired state of Network",
+				Description: "NuageCNIConfigSpec defines the desired state of NuageCNIConfig",
 				Properties: map[string]spec.Schema{
 					"vrsConfig": {
 						SchemaProps: spec.SchemaProps{
@@ -95,11 +95,11 @@ func schema_pkg_apis_operator_v1alpha1_NetworkSpec(ref common.ReferenceCallback)
 	}
 }
 
-func schema_pkg_apis_operator_v1alpha1_NetworkStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_operator_v1alpha1_NuageCNIConfigStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "NetworkStatus defines the observed state of Network",
+				Description: "NuageCNIConfigStatus defines the observed state of NuageCNIConfig",
 				Properties:  map[string]spec.Schema{},
 			},
 		},

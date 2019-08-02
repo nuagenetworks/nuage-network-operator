@@ -1,4 +1,4 @@
-package network
+package nuagecniconfig
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 func TestAll(t *testing.T) {
 	g := NewGomegaWithT(t)
 
-	r := &ReconcileNetwork{
+	r := &ReconcileNuageCNIConfig{
 		client: fake.NewFakeClient(),
 	}
 
@@ -47,7 +47,7 @@ func TestAll(t *testing.T) {
 func TestGet(t *testing.T) {
 	g := NewGomegaWithT(t)
 
-	r := &ReconcileNetwork{
+	r := &ReconcileNuageCNIConfig{
 		client: fake.NewFakeClient(),
 	}
 
@@ -60,7 +60,7 @@ func TestGet(t *testing.T) {
 func TestIsDiffConfig(t *testing.T) {
 	g := NewGomegaWithT(t)
 
-	r := &ReconcileNetwork{
+	r := &ReconcileNuageCNIConfig{
 		client: fake.NewFakeClient(),
 	}
 

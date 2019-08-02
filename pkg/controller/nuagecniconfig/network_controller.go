@@ -1,4 +1,4 @@
-package network
+package nuagecniconfig
 
 import (
 	"context"
@@ -34,7 +34,7 @@ var (
 * business logic.  Delete these comments after modifying this file.*
  */
 
-// Add creates a new Network Controller and adds it to the Manager. The Manager will set fields on the Controller
+// Add creates a new NuageCNIConfig Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
@@ -42,7 +42,7 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileNetwork{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+	return &ReconcileNuageCNIConfig{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -53,17 +53,17 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Watch for changes to primary resource Network
-	err = c.Watch(&source.Kind{Type: &operv1.Network{}}, &handler.EnqueueRequestForObject{})
+	// Watch for changes to primary resource NuageCNIConfig
+	err = c.Watch(&source.Kind{Type: &operv1.NuageCNIConfig{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
 
 	// TODO(user): Modify this to be the types you create that are owned by the primary resource
-	// Watch for changes to secondary resource Pods and requeue the owner Network
+	// Watch for changes to secondary resource Pods and requeue the owner NuageCNIConfig
 	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &operv1.Network{},
+		OwnerType:    &operv1.NuageCNIConfig{},
 	})
 	if err != nil {
 		return err
@@ -72,26 +72,26 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
-// blank assignment to verify that ReconcileNetwork implements reconcile.Reconciler
-var _ reconcile.Reconciler = &ReconcileNetwork{}
+// blank assignment to verify that ReconcileNuageCNIConfig implements reconcile.Reconciler
+var _ reconcile.Reconciler = &ReconcileNuageCNIConfig{}
 
-// ReconcileNetwork reconciles a Network object
-type ReconcileNetwork struct {
+// ReconcileNuageCNIConfig reconciles a NuageCNIConfig object
+type ReconcileNuageCNIConfig struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
 	client client.Client
 	scheme *runtime.Scheme
 }
 
-// Reconcile reads that state of the cluster for a Network object and makes changes based on the state read
-// and what is in the Network.Spec
+// Reconcile reads that state of the cluster for a NuageCNIConfig object and makes changes based on the state read
+// and what is in the NuageCNIConfig.Spec
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
-func (r *ReconcileNetwork) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	var apiServer string
 	log.SetLevel(log.DebugLevel)
-	log.Infof("Reconciling Network")
+	log.Infof("Reconciling NuageCNIConfig")
 
 	clusterInfo, err := r.GetClusterNetworkInfo(request)
 	if err != nil {
@@ -105,7 +105,7 @@ func (r *ReconcileNetwork) Reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	// Fetch the Nuage custom resource instance
-	instance := &operv1.Network{}
+	instance := &operv1.NuageCNIConfig{}
 	err = r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {

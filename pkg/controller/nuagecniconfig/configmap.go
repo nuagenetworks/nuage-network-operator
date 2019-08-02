@@ -1,4 +1,4 @@
-package network
+package nuagecniconfig
 
 import (
 	"bytes"
@@ -19,7 +19,7 @@ var nsn = types.NamespacedName{
 }
 
 // GetReleaseConfig fetches the previous applied release config
-func (r *ReconcileNetwork) GetReleaseConfig() (*operv1.ReleaseConfigDefinition, error) {
+func (r *ReconcileNuageCNIConfig) GetReleaseConfig() (*operv1.ReleaseConfigDefinition, error) {
 	cm := &corev1.ConfigMap{}
 	err := r.client.Get(context.TODO(), nsn, cm)
 	if err != nil && apierrors.IsNotFound(err) {
@@ -37,7 +37,7 @@ func (r *ReconcileNetwork) GetReleaseConfig() (*operv1.ReleaseConfigDefinition, 
 }
 
 //SetReleaseConfig stores the applied release config in api server
-func (r *ReconcileNetwork) SetReleaseConfig(c *operv1.ReleaseConfigDefinition) error {
+func (r *ReconcileNuageCNIConfig) SetReleaseConfig(c *operv1.ReleaseConfigDefinition) error {
 	app, err := json.Marshal(c)
 	if err != nil {
 		return err
@@ -77,7 +77,7 @@ func (r *ReconcileNetwork) SetReleaseConfig(c *operv1.ReleaseConfigDefinition) e
 }
 
 //IsDiffConfig return 0 if both the configs are same
-func (r *ReconcileNetwork) IsDiffConfig(prev, curr *operv1.ReleaseConfigDefinition) (int, error) {
+func (r *ReconcileNuageCNIConfig) IsDiffConfig(prev, curr *operv1.ReleaseConfigDefinition) (int, error) {
 	var s1, s2 []byte
 	var err error
 

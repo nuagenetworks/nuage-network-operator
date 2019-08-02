@@ -1,4 +1,4 @@
-package network
+package nuagecniconfig
 
 import (
 	"context"
@@ -20,9 +20,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-var nu *operv1.Network
+var nu *operv1.NuageCNIConfig
 
-func createNetworkConfig(g *GomegaWithT, r *ReconcileNetwork) {
+func createNetworkConfig(g *GomegaWithT, r *ReconcileNuageCNIConfig) {
 	scheme1 := scheme.Scheme
 	osv1.Install(scheme1)
 	scheme1.AddKnownTypes(configv1.SchemeGroupVersion, &configv1.Network{})
@@ -42,15 +42,15 @@ func createNetworkConfig(g *GomegaWithT, r *ReconcileNetwork) {
 	g.Expect(err).ToNot(HaveOccurred())
 }
 
-func createNetworkOperatorConfig(g *GomegaWithT, r *ReconcileNetwork) {
+func createNetworkOperatorConfig(g *GomegaWithT, r *ReconcileNuageCNIConfig) {
 	scheme2 := scheme.Scheme
 	osv1.Install(scheme2)
-	scheme2.AddKnownTypes(operv1.SchemeGroupVersion, &operv1.Network{})
+	scheme2.AddKnownTypes(operv1.SchemeGroupVersion, &operv1.NuageCNIConfig{})
 
-	nu = &operv1.Network{
-		TypeMeta:   metav1.TypeMeta{APIVersion: operv1.SchemeGroupVersion.String(), Kind: "Network"},
+	nu = &operv1.NuageCNIConfig{
+		TypeMeta:   metav1.TypeMeta{APIVersion: operv1.SchemeGroupVersion.String(), Kind: "NuageCNIConfig"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nuage-network"},
-		Spec: operv1.NetworkSpec{
+		Spec: operv1.NuageCNIConfigSpec{
 			VRSConfig: operv1.VRSConfigDefinition{
 				Controllers:    []string{"10.10.0.0", "10.10.0.1"},
 				UnderlayUplink: "eth0",
@@ -85,7 +85,7 @@ func createNetworkOperatorConfig(g *GomegaWithT, r *ReconcileNetwork) {
 	g.Expect(err).ToNot(HaveOccurred())
 }
 
-func updateCNITag(g *GomegaWithT, r *ReconcileNetwork) {
+func updateCNITag(g *GomegaWithT, r *ReconcileNuageCNIConfig) {
 	nu.Spec.ReleaseConfig.CNITag = "0.0.1"
 	err := r.client.Update(context.TODO(), nu)
 	g.Expect(err).ToNot(HaveOccurred())
@@ -101,14 +101,14 @@ func setupEnvVars(g *GomegaWithT) {
 func TestReconcile(t *testing.T) {
 	g := NewGomegaWithT(t)
 
-	r := &ReconcileNetwork{
+	r := &ReconcileNuageCNIConfig{
 		client: fake.NewFakeClient(),
 	}
 
 	// create Network.config.openshift.io
 	createNetworkConfig(g, r)
 
-	// create Network.operator.nuage.io
+	// create NuageCNIConfig.operator.nuage.io
 	createNetworkOperatorConfig(g, r)
 
 	// set up env vars simulating pod env

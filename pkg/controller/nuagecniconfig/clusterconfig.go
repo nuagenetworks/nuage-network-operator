@@ -1,4 +1,4 @@
-package network
+package nuagecniconfig
 
 import (
 	"context"
@@ -19,7 +19,7 @@ import (
 var configlog = logf.Log.WithName("cluster_config")
 
 // GetClusterNetworkInfo fetches the cluster network configuration from API server
-func (r *ReconcileNetwork) GetClusterNetworkInfo(request reconcile.Request) (*operv1.ClusterNetworkConfigDefinition, error) {
+func (r *ReconcileNuageCNIConfig) GetClusterNetworkInfo(request reconcile.Request) (*operv1.ClusterNetworkConfigDefinition, error) {
 	clusterConfig := &configv1.Network{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "network"}, clusterConfig)
 	if err != nil {

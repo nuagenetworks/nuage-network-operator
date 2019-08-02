@@ -97,41 +97,41 @@ type RegistryConfig struct {
 	Password string `json:"password"`
 }
 
-// NetworkSpec defines the desired state of Network
+// NuageCNIConfigSpec defines the desired state of NuageCNIConfig
 // +k8s:openapi-gen=true
-type NetworkSpec struct {
+type NuageCNIConfigSpec struct {
 	VRSConfig     VRSConfigDefinition     `json:"vrsConfig"`
 	CNIConfig     CNIConfigDefinition     `json:"cniConfig"`
 	MonitorConfig MonitorConfigDefinition `json:"monitorConfig"`
 	ReleaseConfig ReleaseConfigDefinition `json:"releaseConfig"`
 }
 
-// NetworkStatus defines the observed state of Network
+// NuageCNIConfigStatus defines the observed state of NuageCNIConfig
 // +k8s:openapi-gen=true
-type NetworkStatus struct {
+type NuageCNIConfigStatus struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Network is the Schema for the networks API
+// NuageCNIConfig is the Schema for the networks API
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
 // +genclient:nonNamespaced
-type Network struct {
+type NuageCNIConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   NetworkSpec   `json:"spec,omitempty"`
-	Status NetworkStatus `json:"status,omitempty"`
+	Spec   NuageCNIConfigSpec   `json:"spec,omitempty"`
+	Status NuageCNIConfigStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// NetworkList contains a list of Network
-type NetworkList struct {
+// NuageCNIConfigList contains a list of NuageCNIConfig
+type NuageCNIConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Network `json:"items"`
+	Items           []NuageCNIConfig `json:"items"`
 }
 
 // ClusterNetworkConfigDefinition contains the network configuration of cluster
@@ -151,7 +151,7 @@ type TLSCertificates struct {
 
 // RenderConfig container to hold config data that is passed to rendering logic
 type RenderConfig struct {
-	NetworkSpec
+	NuageCNIConfigSpec
 	K8SAPIServerURL      string
 	Certificates         *TLSCertificates
 	ClusterNetworkConfig *ClusterNetworkConfigDefinition
@@ -166,5 +166,5 @@ type CertGenConfig struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Network{}, &NetworkList{})
+	SchemeBuilder.Register(&NuageCNIConfig{}, &NuageCNIConfigList{})
 }

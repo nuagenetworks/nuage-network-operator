@@ -1,5 +1,5 @@
 apiVersion: operator.nuage.io/v1alpha1
-kind: Network
+kind: NuageCNIConfig
 metadata:
   name: nuage-network
   spec:
