@@ -4,7 +4,7 @@ kind: DaemonSet
 apiVersion: apps/v1
 metadata:
   name: nuage-vrs
-  namespace: kube-system
+  namespace: nuage-network-operator
   labels:
     k8s-app: nuage-vrs
 spec:

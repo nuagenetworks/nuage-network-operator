@@ -3,7 +3,7 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: nuage-monitor-config-data
-  namespace: kube-system
+  namespace: nuage-network-operator
 data:
   # This will generate the required Nuage monitor configuration
   # on master nodes
@@ -84,7 +84,7 @@ kind: DaemonSet
 apiVersion: apps/v1
 metadata:
   name: nuage-monitor
-  namespace: kube-system
+  namespace: nuage-network-operator
   labels:
     k8s-app: nuage-monitor
 spec:

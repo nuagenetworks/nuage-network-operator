@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nuage-network-operator
+  annotations:
+    nuage.io/node-selector: ""
+    labels:
+      name: nuage-network-operator
+      nuage.io/run-level: "0"

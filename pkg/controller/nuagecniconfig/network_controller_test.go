@@ -121,27 +121,27 @@ func TestReconcile(t *testing.T) {
 	g.Expect(res).ToNot(BeNil())
 
 	monitorDS := appsv1.DaemonSet{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: "nuage-monitor", Namespace: "kube-system"}, &monitorDS)
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: "nuage-monitor", Namespace: "nuage-network-operator"}, &monitorDS)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(monitorDS.GetName()).To(Equal("nuage-monitor"))
 
 	monitorConfig := corev1.ConfigMap{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: "nuage-monitor-config-data", Namespace: "kube-system"}, &monitorConfig)
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: "nuage-monitor-config-data", Namespace: "nuage-network-operator"}, &monitorConfig)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(monitorConfig.GetName()).To(Equal("nuage-monitor-config-data"))
 
 	cniDS := appsv1.DaemonSet{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: "nuage-cni", Namespace: "kube-system"}, &cniDS)
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: "nuage-cni", Namespace: "nuage-network-operator"}, &cniDS)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(cniDS.GetName()).To(Equal("nuage-cni"))
 
 	cniConfig := corev1.ConfigMap{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: "nuage-cni-config-data", Namespace: "kube-system"}, &cniConfig)
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: "nuage-cni-config-data", Namespace: "nuage-network-operator"}, &cniConfig)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(cniConfig.GetName()).To(Equal("nuage-cni-config-data"))
 
 	vrsDS := appsv1.DaemonSet{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: "nuage-vrs", Namespace: "kube-system"}, &vrsDS)
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: "nuage-vrs", Namespace: "nuage-network-operator"}, &vrsDS)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(vrsDS.GetName()).To(Equal("nuage-vrs"))
 

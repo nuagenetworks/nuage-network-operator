@@ -3,7 +3,7 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: nuage-cni-config-data
-  namespace: kube-system
+  namespace: nuage-network-operator
 data:
   # This will generate the required Nuage vsp-k8s.yaml
   # config on each slave node
@@ -59,7 +59,7 @@ kind: DaemonSet
 apiVersion: apps/v1
 metadata:
   name: nuage-cni
-  namespace: kube-system
+  namespace: nuage-network-operator
   labels:
     k8s-app: nuage-cni
 spec:

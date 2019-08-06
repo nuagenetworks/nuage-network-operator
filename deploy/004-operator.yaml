@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nuage-network-operator
+  namespace: nuage-network-operator
 spec:
   replicas: 1
   selector:

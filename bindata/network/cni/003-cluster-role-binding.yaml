@@ -5,6 +5,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: "{{.CNIConfig.ServiceAccountName}}"
+  namespace: nuage-network-operator
 roleRef:
   kind: ClusterRole
   name: "{{.CNIConfig.ClusterRoleName}}"
