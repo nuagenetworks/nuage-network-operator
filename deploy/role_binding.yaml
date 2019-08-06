@@ -5,6 +5,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: nuage-network-operator
+  namespace: nuage-network-operator
 roleRef:
   kind: ClusterRole
   name: nuage-network-operator
