@@ -1,0 +1,31 @@
+apiVersion: operator.nuage.io/v1alpha1
+kind: NuageCNIConfig
+metadata:
+  name: nuage-network
+spec:
+  vrsConfig:
+     controllers:
+        - 10.10.10.100
+        - 10.10.10.101
+     underlayUplink: eth0
+  monitorConfig:
+     vsdURL: https://10.10.10.102:8443
+     vsdMetadata:
+        enterprise: nuage
+        domain: nuage
+        user: nuage
+        userCert: cert
+        userKey: key
+     vsdFlags:
+        underlayEnabled: true
+  releaseConfig:
+     registry:
+        url: https://registry.io/images/
+        username: username
+        password: password
+     vrsTag: 0.0.0-1
+     cniTag: 0.0.0-1
+     monitorTag: 0.0.0-1
+  cniConfig:
+     mtu: 1450
+     loadBalancerURL: https://127.0.0.1:9443
