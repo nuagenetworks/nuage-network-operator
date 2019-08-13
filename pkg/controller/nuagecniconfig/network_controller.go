@@ -12,8 +12,10 @@ import (
 	"github.com/nuagenetworks/nuage-network-operator/pkg/network/monitor"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/network/vrs"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/render"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -121,6 +123,7 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 	//TODO: Get the previous config
 	isUpdate := true
 	if rc, err := r.GetReleaseConfig(); err == nil && rc == nil {
+		log.Infof("no previous config found. creating objects first time")
 		isUpdate = false
 	} else {
 		if err != nil {
@@ -189,6 +192,15 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 	//Create or update the objects against API server
 	for _, obj := range objs {
 		if isUpdate {
+			ds := appsv1.DaemonSet{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "DaemonSet",
+					APIVersion: "apps/v1",
+				},
+			}
+			if obj.GroupVersionKind().String() != ds.GroupVersionKind().String() {
+				continue
+			}
 			if err := r.client.Update(context.TODO(), obj); err != nil {
 				log.Errorf("error updating the object %v", err)
 				return reconcile.Result{}, err
@@ -196,7 +208,9 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 		} else {
 			if err := r.client.Create(context.TODO(), obj); err != nil {
 				log.Errorf("error creating the object %v", err)
-				return reconcile.Result{}, err
+				if !errors.IsAlreadyExists(err) {
+					return reconcile.Result{}, err
+				}
 			}
 		}
 	}
