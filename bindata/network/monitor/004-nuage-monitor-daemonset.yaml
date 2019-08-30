@@ -47,11 +47,11 @@ data:
       nuageMonServer:
           URL: {{.MonitorConfig.RestServerAddress}}
           certificateDirectory: {{.Certificates.CertificateDir}}
-          clientCA: |
+          clientCAData: |
 {{.Certificates.CA | indent 12}}
-          serverCertificate: |
+          serverCertificateData: |
 {{.Certificates.Certificate | indent 12}}
-          serverKey: |
+          serverKeyData: |
 {{.Certificates.PrivateKey | indent 12}}
       # etcd config required for HA
       etcdClientConfig:
@@ -104,7 +104,7 @@ spec:
           effect: NoSchedule
           operator: Exists
       nodeSelector:
-        install-monitor: "true"
+        node-role.kubernetes.io/master: ""
       serviceAccoutName: "{{.MonitorConfig.ServiceAccountName}}"
       containers:
         # This container configures Nuage Master node
