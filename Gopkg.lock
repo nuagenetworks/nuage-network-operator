@@ -280,7 +280,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/openshift/api"
-  packages = ["config/v1","operator/v1","route/v1"]
+  packages = ["config/v1","route/v1"]
   revision = "9525304a0adb725ab4a4a54539a1a6bf6cc343d3"
 
 [[projects]]
@@ -485,12 +485,6 @@
 
 [[projects]]
   branch = "master"
-  name = "k8s.io/component-base"
-  packages = ["config","config/v1alpha1"]
-  revision = "042c00bc1f9e2571ae04255e09819fa8f3e870d1"
-
-[[projects]]
-  branch = "master"
   name = "k8s.io/gengo"
   packages = ["args","generator","namer","parser","types"]
   revision = "e17681d19d3ac4837a019ece36c2a0ec31ffe985"
@@ -507,22 +501,10 @@
   revision = "c59034cc13d587f5ef4e85ca0ade0c1866ae8e1d"
 
 [[projects]]
-  branch = "master"
-  name = "k8s.io/kube-proxy"
-  packages = ["config/v1alpha1"]
-  revision = "41fd6e49ecac60fb0d98e710a787924a5fcc2e55"
-
-[[projects]]
   name = "k8s.io/kube-state-metrics"
   packages = ["pkg/collector","pkg/metric","pkg/metrics_store"]
   revision = "de19ed4f12d471fccc79f9a9fee73f7c107ecd33"
   version = "v1.6.0"
-
-[[projects]]
-  branch = "master"
-  name = "k8s.io/utils"
-  packages = ["pointer"]
-  revision = "3dccf664f023863740c508fb4284e49742bedfa4"
 
 [[projects]]
   name = "sigs.k8s.io/controller-runtime"
@@ -544,6 +526,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4f5108cdad37fd88c4a54d0127fdba5ee66f90c0a618cfbe62b73480634455cc"
+  inputs-digest = "ac07e2c6a87ebdfed774bc53b711888e4506e61df3813cdf3ae1c2a5044849cd"
   solver-name = "gps-cdcl"
   solver-version = 1
