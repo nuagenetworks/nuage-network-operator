@@ -2,25 +2,40 @@ package nuagecniconfig
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
-
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes/scheme"
 
 	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/names"
 	. "github.com/onsi/gomega"
 	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/api/network"
 	osv1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 var nu *operv1.NuageCNIConfig
+
+//Thanks to https://github.com/jaegertracing/jaeger-operator/
+type fakeDiscoveryClient struct {
+	discovery.DiscoveryInterface
+	ServerGroupsFunc func() (apiGroupList *metav1.APIGroupList, err error)
+}
+
+func (d *fakeDiscoveryClient) ServerGroups() (apiGroupList *metav1.APIGroupList, err error) {
+	if d.ServerGroupsFunc == nil {
+		return &metav1.APIGroupList{}, nil
+	}
+	return d.ServerGroupsFunc()
+}
 
 func createNetworkConfig(g *GomegaWithT, r *ReconcileNuageCNIConfig) {
 	scheme1 := scheme.Scheme
@@ -98,11 +113,51 @@ func setupEnvVars(g *GomegaWithT) {
 	g.Expect(err).ToNot(HaveOccurred())
 }
 
+func TestGetOrchestratorType(t *testing.T) {
+	g := NewGomegaWithT(t)
+	dcl := &fakeDiscoveryClient{}
+
+	r := &ReconcileNuageCNIConfig{
+		client: fake.NewFakeClient(),
+	}
+
+	o, err := r.getOrchestratorType()
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(o).To(Equal(OrchestratorNone))
+
+	r.dclient = dcl
+	o, err = r.getOrchestratorType()
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(o).To(Equal(OrchestratorKubernetes))
+
+	dcl.ServerGroupsFunc = func() (*metav1.APIGroupList, error) {
+		return nil, fmt.Errorf("error")
+	}
+	o, err = r.getOrchestratorType()
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(o).To(Equal(OrchestratorNone))
+
+	dcl.ServerGroupsFunc = func() (*metav1.APIGroupList, error) {
+		return &metav1.APIGroupList{
+			Groups: []metav1.APIGroup{
+				metav1.APIGroup{
+					Name: network.GroupName,
+				},
+			},
+		}, nil
+	}
+	o, err = r.getOrchestratorType()
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(o).To(Equal(OrchestratorOpenShift))
+
+}
+
 func TestReconcile(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	r := &ReconcileNuageCNIConfig{
-		client: fake.NewFakeClient(),
+		client:  fake.NewFakeClient(),
+		dclient: &fakeDiscoveryClient{},
 	}
 
 	// create Network.config.openshift.io

@@ -2,7 +2,9 @@ package nuagecniconfig
 
 import (
 	"context"
+	"fmt"
 	"net"
+	"strings"
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -11,12 +13,60 @@ import (
 	iputil "github.com/nuagenetworks/nuage-network-operator/pkg/util/ip"
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var configlog = logf.Log.WithName("cluster_config")
+const (
+	//DefaultServiceNetworkCIDR is the default service cidr used by kubernetes as of v1.15
+	DefaultServiceNetworkCIDR string = "10.0.0.0/24"
+)
+
+//GetK8SClusterNetworkInfo fetches service and pod cidr from api server
+func (r *ReconcileNuageCNIConfig) GetK8SClusterNetworkInfo() (*operv1.ClusterNetworkConfigDefinition, error) {
+
+	//if k8s, cluster network and cluster network subnet length
+	// are read from crd directly and should have been populated by now
+	c := &operv1.ClusterNetworkConfigDefinition{
+		ClusterNetworkCIDR:         r.clusterNetworkCIDR,
+		ClusterNetworkSubnetLength: r.clusterNetworkSubnetLength,
+	}
+
+	podList := &corev1.PodList{}
+	lo := &client.ListOptions{Namespace: "kube-system"}
+	lo.SetLabelSelector("component==kube-apiserver")
+
+	err := r.client.List(context.TODO(), lo, podList)
+	if err != nil {
+		log.Errorf("fetching pod list failed")
+		return nil, err
+	}
+
+	if len(podList.Items) == 0 {
+		return nil, fmt.Errorf("api server pod could not be listed")
+	}
+
+	command := podList.Items[0].Spec.Containers[0].Command
+	for _, arg := range command {
+		if strings.Contains(arg, "service-cluster-ip-range") {
+			kvs := strings.Split(arg, "=")
+			if len(kvs) < 2 {
+				c.ServiceNetworkCIDR = DefaultServiceNetworkCIDR
+				break
+			}
+			c.ServiceNetworkCIDR = strings.Trim(kvs[1], `'"`)
+		}
+	}
+
+	if len(c.ServiceNetworkCIDR) == 0 {
+		c.ServiceNetworkCIDR = DefaultServiceNetworkCIDR
+	}
+
+	return c, nil
+}
 
 // GetClusterNetworkInfo fetches the cluster network configuration from API server
 func (r *ReconcileNuageCNIConfig) GetClusterNetworkInfo(request reconcile.Request) (*operv1.ClusterNetworkConfigDefinition, error) {
@@ -35,7 +85,7 @@ func (r *ReconcileNuageCNIConfig) GetClusterNetworkInfo(request reconcile.Reques
 
 	// Validate the cluster config
 	if err = ValidateClusterConfig(clusterConfig.Spec); err != nil {
-		configlog.Error(err, "Failed to validate Network.Spec")
+		log.Errorf("Failed to validate Network.Spec %v", err)
 		return nil, err
 	}
 

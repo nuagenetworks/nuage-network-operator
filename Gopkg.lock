@@ -130,8 +130,8 @@
 [[projects]]
   name = "github.com/go-openapi/spec"
   packages = ["."]
-  revision = "bdfd7e07daecc404d77868a88b2364d0aed0ee5a"
-  version = "v0.19.2"
+  revision = "2223ab324566e4ace63ab69b9c8fff1b81a40eeb"
+  version = "v0.19.3"
 
 [[projects]]
   name = "github.com/go-openapi/swag"
@@ -280,7 +280,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/openshift/api"
-  packages = ["config/v1","route/v1"]
+  packages = ["config/v1","network","network/v1","route/v1"]
   revision = "9525304a0adb725ab4a4a54539a1a6bf6cc343d3"
 
 [[projects]]
@@ -342,6 +342,12 @@
   packages = ["modfile","module","semver"]
   revision = "438578804ca6f31be148c27683afc419ce47c06e"
   version = "v1.3.0"
+
+[[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "8bdbc7bcc01dcbb8ec23dc8a28e332258d25251f"
+  version = "v1.4.1"
 
 [[projects]]
   name = "github.com/spf13/afero"
@@ -526,6 +532,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ac07e2c6a87ebdfed774bc53b711888e4506e61df3813cdf3ae1c2a5044849cd"
+  inputs-digest = "ebdd28cab6d5b9904abcb72b0c8ea566857df1ffec094a1bbb617db35d5e426a"
   solver-name = "gps-cdcl"
   solver-version = 1
