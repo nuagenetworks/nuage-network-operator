@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	log "github.com/Sirupsen/logrus"
 	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/certs"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/network/cni"
@@ -13,6 +12,7 @@ import (
 	"github.com/nuagenetworks/nuage-network-operator/pkg/network/vrs"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/render"
 	"github.com/openshift/api/network"
+	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"

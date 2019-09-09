@@ -50,12 +50,6 @@
   revision = "de5bf2ad457846296e2031421a34e2568e304e35"
 
 [[projects]]
-  name = "github.com/Sirupsen/logrus"
-  packages = ["."]
-  revision = "839c75faf7f98a33d445d181f3018b5c3409a45e"
-  version = "v1.4.2"
-
-[[projects]]
   name = "github.com/appscode/jsonpatch"
   packages = ["."]
   revision = "7c0e3b262f30165a8ec3d0b4c6059fd92703bfb2"
@@ -532,6 +526,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ebdd28cab6d5b9904abcb72b0c8ea566857df1ffec094a1bbb617db35d5e426a"
+  inputs-digest = "2e6d1270e39240d741d66cbbf7deaaca0f5c6e18e692f96f8040085d234ce697"
   solver-name = "gps-cdcl"
   solver-version = 1
