@@ -41,21 +41,40 @@ var (
 // Add creates a new NuageCNIConfig Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
+	r, err := newReconciler(mgr)
+	if err != nil {
+		return err
+	}
+	return add(mgr, r)
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+func newReconciler(mgr manager.Manager) (reconcile.Reconciler, error) {
 	dc, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
 	if err != nil {
 		log.Errorf("creating new discovery client failed")
+		return &ReconcileNuageCNIConfig{}, err
 	}
 
-	return &ReconcileNuageCNIConfig{
+	r := &ReconcileNuageCNIConfig{
 		client:  mgr.GetClient(),
 		scheme:  mgr.GetScheme(),
 		dclient: dc,
 	}
+
+	r.orchestrator, err = r.getOrchestratorType()
+	if err != nil {
+		log.Errorf("orchestrator type could not be set %v", err)
+		return &ReconcileNuageCNIConfig{}, err
+	}
+
+	r.apiServerURL, err = buildAPIServerURL()
+	if err != nil {
+		log.Errorf("failed to get api server url %v", err)
+		return &ReconcileNuageCNIConfig{}, err
+	}
+
+	return r, nil
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -109,6 +128,7 @@ type ReconcileNuageCNIConfig struct {
 	scheme                     *runtime.Scheme
 	orchestrator               OrchestratorType
 	clusterNetworkCIDR         string
+	apiServerURL               string
 	clusterNetworkSubnetLength uint32
 }
 
@@ -118,42 +138,38 @@ type ReconcileNuageCNIConfig struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	var apiServer string
 	log.SetLevel(log.DebugLevel)
 	log.Infof("Reconciling NuageCNIConfig")
 
-	if len(r.orchestrator) == 0 {
-		orchestrator, err := r.getOrchestratorType()
-		if err != nil {
-			log.Errorf("get orchestrator type failed %v", err)
-			return reconcile.Result{}, err
+	// Fetch the Nuage custom resource instance
+	instance := &operv1.NuageCNIConfig{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return reconcile.Result{}, nil
 		}
-		r.orchestrator = orchestrator
+		return reconcile.Result{}, err
 	}
 
-	clusterInfo, err := r.GetClusterNetworkInfo(request)
+	if err := r.parse(instance); err != nil {
+		log.Errorf("failed to parse crd config %v", err)
+		return reconcile.Result{}, err
+	}
+
+	if r.orchestrator == OrchestratorKubernetes {
+		r.setPodNetworkConfig(&instance.Spec.PodNetworkConfig)
+	}
+
+	clusterInfo := &operv1.ClusterNetworkConfigDefinition{}
+	clusterInfo, err = r.GetClusterNetworkInfo()
 	if err != nil {
 		log.Errorf("failed to get cluster network config %v", err)
 		return reconcile.Result{}, err
 	}
 
 	if clusterInfo == nil {
-		log.Infof("could not find network config. object must have been deleted")
+		log.Infof("could not populate network config")
 		return reconcile.Result{}, nil
-	}
-
-	// Fetch the Nuage custom resource instance
-	instance := &operv1.NuageCNIConfig{}
-	err = r.client.Get(context.TODO(), request.NamespacedName, instance)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
-			return reconcile.Result{}, nil
-		}
-		// Error reading the object - requeue the request.
-		return reconcile.Result{}, err
 	}
 
 	//TODO: Get the previous config
@@ -176,33 +192,6 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 	log.Debugf("operator network %v\n", instance)
 	log.Debugf("%v\n", isUpdate)
 
-	apiServer, err = buildAPIServerURL()
-	if err != nil {
-		log.Errorf("failed to get api server url %v", err)
-		return reconcile.Result{}, err
-	}
-
-	if err := monitor.Parse(&instance.Spec.MonitorConfig); err != nil {
-		//invalid config passed.
-		// TODO: update the operator status to the same and dont requeue
-		log.Errorf("failed to parse monitor config %v", err)
-		return reconcile.Result{}, err
-	}
-
-	if err := cni.Parse(&instance.Spec.CNIConfig); err != nil {
-		//invalid config passed.
-		//TODO: update the operator status to the same and dont requeue
-		log.Errorf("failed to parse cni config %v", err)
-		return reconcile.Result{}, err
-	}
-
-	if err := vrs.Parse(&instance.Spec.VRSConfig); err != nil {
-		//invalid config passed.
-		//TODO: update the operator status to the same and dont requeue
-		log.Errorf("failed to parse vrs config %v", err)
-		return reconcile.Result{}, err
-	}
-
 	certificates := &operv1.TLSCertificates{}
 	certificates, err = certs.GenerateCertificates(&operv1.CertGenConfig{})
 	if err != nil {
@@ -213,7 +202,7 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 	//Render the templates and get the objects
 	renderData := render.MakeRenderData(&operv1.RenderConfig{
 		instance.Spec,
-		apiServer,
+		r.apiServerURL,
 		certificates,
 		clusterInfo,
 	})
@@ -285,4 +274,34 @@ func (r *ReconcileNuageCNIConfig) getOrchestratorType() (OrchestratorType, error
 	}
 
 	return OrchestratorKubernetes, nil
+}
+
+func (r *ReconcileNuageCNIConfig) parse(instance *operv1.NuageCNIConfig) error {
+	if err := monitor.Parse(&instance.Spec.MonitorConfig); err != nil {
+		//invalid config passed.
+		// TODO: update the operator status to the same and dont requeue
+		log.Errorf("failed to parse monitor config %v", err)
+		return err
+	}
+
+	if err := cni.Parse(&instance.Spec.CNIConfig); err != nil {
+		//invalid config passed.
+		//TODO: update the operator status to the same and dont requeue
+		log.Errorf("failed to parse cni config %v", err)
+		return err
+	}
+
+	if err := vrs.Parse(&instance.Spec.VRSConfig); err != nil {
+		//invalid config passed.
+		//TODO: update the operator status to the same and dont requeue
+		log.Errorf("failed to parse vrs config %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (r *ReconcileNuageCNIConfig) setPodNetworkConfig(p *operv1.PodNetworkConfigDefinition) {
+	r.clusterNetworkCIDR = p.ClusterNetworkCIDR
+	r.clusterNetworkSubnetLength = p.SubnetLength
 }

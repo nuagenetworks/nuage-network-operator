@@ -97,13 +97,21 @@ type RegistryConfig struct {
 	Password string `json:"password"`
 }
 
+// PodNetworkConfigDefinition hold the pod network
+// to be only used for k8s
+type PodNetworkConfigDefinition struct {
+	ClusterNetworkCIDR string `json:"podNetwork"`
+	SubnetLength       uint32 `json:"subnetLength"`
+}
+
 // NuageCNIConfigSpec defines the desired state of NuageCNIConfig
 // +k8s:openapi-gen=true
 type NuageCNIConfigSpec struct {
-	VRSConfig     VRSConfigDefinition     `json:"vrsConfig"`
-	CNIConfig     CNIConfigDefinition     `json:"cniConfig"`
-	MonitorConfig MonitorConfigDefinition `json:"monitorConfig"`
-	ReleaseConfig ReleaseConfigDefinition `json:"releaseConfig"`
+	VRSConfig        VRSConfigDefinition        `json:"vrsConfig"`
+	CNIConfig        CNIConfigDefinition        `json:"cniConfig"`
+	MonitorConfig    MonitorConfigDefinition    `json:"monitorConfig"`
+	ReleaseConfig    ReleaseConfigDefinition    `json:"releaseConfig"`
+	PodNetworkConfig PodNetworkConfigDefinition `json:"podNetworkConfig"`
 }
 
 // NuageCNIConfigStatus defines the observed state of NuageCNIConfig

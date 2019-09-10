@@ -135,6 +135,17 @@ spec:
               - vsdMetadata
               - vsdFlags
               type: object
+            podNetworkConfig:
+              properties:
+                podNetwork:
+                  type: string
+                subnetLength:
+                  format: int32
+                  type: integer
+              required:
+              - podNetwork
+              - subnetLength
+              type: object
             releaseConfig:
               properties:
                 cniTag:
@@ -189,6 +200,7 @@ spec:
           - cniConfig
           - monitorConfig
           - releaseConfig
+          - podNetworkConfig
           type: object
         status:
           type: object

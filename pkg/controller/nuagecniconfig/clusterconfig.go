@@ -6,8 +6,6 @@ import (
 	"net"
 	"strings"
 
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
 	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/names"
 	iputil "github.com/nuagenetworks/nuage-network-operator/pkg/util/ip"
@@ -25,7 +23,16 @@ const (
 	DefaultServiceNetworkCIDR string = "10.0.0.0/24"
 )
 
-//GetK8SClusterNetworkInfo fetches service and pod cidr from api server
+// GetClusterNetworkInfo fetches the cluster network configuration from API server
+func (r *ReconcileNuageCNIConfig) GetClusterNetworkInfo() (*operv1.ClusterNetworkConfigDefinition, error) {
+	if r.orchestrator == OrchestratorKubernetes {
+		return r.GetK8SClusterNetworkInfo()
+	}
+
+	return r.GetOSEClusterNetworkInfo()
+}
+
+//GetK8SClusterNetworkInfo fetches service cidr from k8s api server
 func (r *ReconcileNuageCNIConfig) GetK8SClusterNetworkInfo() (*operv1.ClusterNetworkConfigDefinition, error) {
 
 	//if k8s, cluster network and cluster network subnet length
@@ -68,23 +75,19 @@ func (r *ReconcileNuageCNIConfig) GetK8SClusterNetworkInfo() (*operv1.ClusterNet
 	return c, nil
 }
 
-// GetClusterNetworkInfo fetches the cluster network configuration from API server
-func (r *ReconcileNuageCNIConfig) GetClusterNetworkInfo(request reconcile.Request) (*operv1.ClusterNetworkConfigDefinition, error) {
+// GetOSEClusterNetworkInfo fetches network config from api server
+func (r *ReconcileNuageCNIConfig) GetOSEClusterNetworkInfo() (*operv1.ClusterNetworkConfigDefinition, error) {
 	clusterConfig := &configv1.Network{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "network"}, clusterConfig)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
 			return nil, nil
 		}
-		// Error reading the object - requeue the request.
 		return nil, err
 	}
 
 	// Validate the cluster config
-	if err = ValidateClusterConfig(clusterConfig.Spec); err != nil {
+	if err = ValidateOSEClusterConfig(clusterConfig.Spec); err != nil {
 		log.Errorf("Failed to validate Network.Spec %v", err)
 		return nil, err
 	}
@@ -97,8 +100,8 @@ func (r *ReconcileNuageCNIConfig) GetClusterNetworkInfo(request reconcile.Reques
 	return networkInfo, nil
 }
 
-// ValidateClusterConfig ensures the cluster config is valid.
-func ValidateClusterConfig(clusterConfig configv1.NetworkSpec) error {
+// ValidateOSEClusterConfig ensures the cluster config is valid.
+func ValidateOSEClusterConfig(clusterConfig configv1.NetworkSpec) error {
 	// Check all networks for overlaps
 	pool := iputil.IPPool{}
 
@@ -106,6 +109,7 @@ func ValidateClusterConfig(clusterConfig configv1.NetworkSpec) error {
 		// Right now we only support a single service network
 		return errors.Errorf("spec.serviceNetwork must have only one entry")
 	}
+
 	for _, snet := range clusterConfig.ServiceNetwork {
 		_, cidr, err := net.ParseCIDR(snet)
 		if err != nil {
@@ -127,11 +131,11 @@ func ValidateClusterConfig(clusterConfig configv1.NetworkSpec) error {
 		size, _ := cidr.Mask.Size()
 		// The comparison is inverted; smaller number is larger block
 		if cnet.HostPrefix < uint32(size) {
-			return errors.Errorf("hostPrefix %d is larger than its cidr %s",
+			return errors.Errorf("subnet length %d is larger than its cidr %s",
 				cnet.HostPrefix, cnet.CIDR)
 		}
 		if cnet.HostPrefix > 30 {
-			return errors.Errorf("hostPrefix %d is too small, must be a /30 or larger",
+			return errors.Errorf("subnet length %d is too small, must be a /30 or larger",
 				cnet.HostPrefix)
 		}
 		if err := pool.Add(*cidr); err != nil {
@@ -143,5 +147,41 @@ func ValidateClusterConfig(clusterConfig configv1.NetworkSpec) error {
 		return errors.Errorf("spec.networkType \"%s\"is not supported", clusterConfig.NetworkType)
 	}
 
+	return nil
+}
+
+// ValidateK8SClusterConfig validates the cluster config for k8s
+func ValidateK8SClusterConfig(c *operv1.ClusterNetworkConfigDefinition) error {
+	// Check all networks for overlaps
+	pool := iputil.IPPool{}
+
+	_, cidr, err := net.ParseCIDR(c.ServiceNetworkCIDR)
+	if err != nil {
+		return errors.Errorf("invalid service network cidr found %v", c.ServiceNetworkCIDR)
+	}
+
+	if err := pool.Add(*cidr); err != nil {
+		return err
+	}
+
+	_, cidr, err = net.ParseCIDR(c.ClusterNetworkCIDR)
+	if err != nil {
+		return errors.Errorf("invalid pod network cidr found %v", c.ClusterNetworkCIDR)
+	}
+
+	if err := pool.Add(*cidr); err != nil {
+		return err
+	}
+
+	size, _ := cidr.Mask.Size()
+	// The comparison is inverted; smaller number is larger block
+	if c.ClusterNetworkSubnetLength < uint32(size) {
+		return errors.Errorf("subnet length %d is larger than its cidr %s",
+			c.ClusterNetworkSubnetLength, c.ClusterNetworkCIDR)
+	}
+	if c.ClusterNetworkSubnetLength > 30 {
+		return errors.Errorf("subnet length %d is too small, must be a /30 or larger",
+			c.ClusterNetworkSubnetLength)
+	}
 	return nil
 }

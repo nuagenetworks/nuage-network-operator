@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"testing"
 
+	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/names"
 	. "github.com/onsi/gomega"
 	configv1 "github.com/openshift/api/config/v1"
 	osv1 "github.com/openshift/api/route/v1"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 func TestGetK8SClusterNetworkInfo(t *testing.T) {
@@ -84,7 +84,7 @@ func TestGetClusterConfig(t *testing.T) {
 		client: fake.NewFakeClient(),
 	}
 
-	cnf, err := r.GetClusterNetworkInfo(reconcile.Request{})
+	cnf, err := r.GetClusterNetworkInfo()
 	g.Expect(err).To(BeNil())
 	g.Expect(cnf).To(BeNil())
 
@@ -103,7 +103,7 @@ func TestGetClusterConfig(t *testing.T) {
 	err = r.client.Create(context.TODO(), c)
 	g.Expect(err).ToNot(HaveOccurred())
 
-	cnf, err = r.GetClusterNetworkInfo(reconcile.Request{types.NamespacedName{Name: "network"}})
+	cnf, err = r.GetOSEClusterNetworkInfo()
 	g.Expect(err).To(BeNil())
 	g.Expect(cnf).ToNot(BeNil())
 	g.Expect(cnf.ClusterNetworkCIDR).To(Equal("70.70.0.0/16"))
@@ -112,93 +112,163 @@ func TestGetClusterConfig(t *testing.T) {
 
 }
 
-func TestValidateClusterConfig(t *testing.T) {
+func TestValidateOSEClusterConfig(t *testing.T) {
 	g := NewGomegaWithT(t)
 
-	//	r := &ReconcileNuageCNIConfig{
-	//		client: fake.NewFakeClient(),
-	//	}
-
-	spec := configv1.NetworkSpec{
-		ClusterNetwork: []configv1.ClusterNetworkEntry{
-			{CIDR: "70.70.0.0/16", HostPrefix: 24},
-		},
-		ServiceNetwork: []string{"192.168.0.0/16"},
-		NetworkType:    names.NuageSDN,
+	type testvec struct {
+		in  configv1.NetworkSpec
+		out error
 	}
 
-	err := ValidateClusterConfig(spec)
-	g.Expect(err).ToNot(HaveOccurred())
-
-	spec1 := configv1.NetworkSpec{
-		ClusterNetwork: []configv1.ClusterNetworkEntry{
-			{CIDR: "70.70.0.0/16", HostPrefix: 24},
+	vec := []testvec{
+		{
+			in: configv1.NetworkSpec{
+				ClusterNetwork: []configv1.ClusterNetworkEntry{
+					{CIDR: "70.70.0.0/16", HostPrefix: 24},
+				},
+				ServiceNetwork: []string{"192.168.0.0/16"},
+				NetworkType:    names.NuageSDN,
+			},
+			out: nil,
 		},
-		ServiceNetwork: []string{"192.168.0.0/16"},
+		{
+			in: configv1.NetworkSpec{
+				ClusterNetwork: []configv1.ClusterNetworkEntry{
+					{CIDR: "70.70.0.0/16", HostPrefix: 24},
+				},
+				ServiceNetwork: []string{"192.168.0.0/16"},
+			},
+			out: errors.Errorf("is not supported"),
+		},
+		{
+			in: configv1.NetworkSpec{
+				ClusterNetwork: []configv1.ClusterNetworkEntry{
+					{CIDR: "70.70.0.0/16", HostPrefix: 24},
+					{CIDR: "70.70.0.0/16", HostPrefix: 24},
+				},
+				ServiceNetwork: []string{"192.168.0.0/16"},
+			},
+			out: errors.Errorf("must have only one entry"),
+		},
+		{
+			in: configv1.NetworkSpec{
+				ClusterNetwork: []configv1.ClusterNetworkEntry{
+					{CIDR: "70.70.0.0/16", HostPrefix: 24},
+				},
+				ServiceNetwork: []string{"192.168.0.0/16", "10.10.0.0/16"},
+			},
+			out: errors.Errorf("must have only one entry"),
+		},
+		{
+			in: configv1.NetworkSpec{
+				ClusterNetwork: []configv1.ClusterNetworkEntry{
+					{CIDR: "70.70.0.0/16", HostPrefix: 24},
+				},
+				ServiceNetwork: []string{"192.168.0.0/116"},
+			},
+			out: errors.Errorf("could not parse spec.serviceNetwork"),
+		},
+		{
+			in: configv1.NetworkSpec{
+				ClusterNetwork: []configv1.ClusterNetworkEntry{
+					{CIDR: "70.70.0.0/116", HostPrefix: 24},
+				},
+				ServiceNetwork: []string{"192.168.0.0/16"},
+			},
+			out: errors.Errorf("could not parse spec.clusterNetwork"),
+		},
+		{
+			in: configv1.NetworkSpec{
+				ClusterNetwork: []configv1.ClusterNetworkEntry{
+					{CIDR: "70.70.0.0/16", HostPrefix: 15},
+				},
+				ServiceNetwork: []string{"192.168.0.0/16"},
+			},
+			out: errors.Errorf("is larger than its cidr"),
+		},
+		{
+			in: configv1.NetworkSpec{
+				ClusterNetwork: []configv1.ClusterNetworkEntry{
+					{CIDR: "70.70.0.0/16", HostPrefix: 31},
+				},
+				ServiceNetwork: []string{"192.168.0.0/16"},
+			},
+			out: errors.Errorf("is too small"),
+		},
 	}
 
-	err = ValidateClusterConfig(spec1)
-	g.Expect(err).To(HaveOccurred())
-	g.Expect(err.Error()).To(ContainSubstring("is not supported"))
-
-	spec2 := configv1.NetworkSpec{
-		ClusterNetwork: []configv1.ClusterNetworkEntry{
-			{CIDR: "70.70.0.0/16", HostPrefix: 24},
-			{CIDR: "70.70.0.0/16", HostPrefix: 24},
-		},
-		ServiceNetwork: []string{"192.168.0.0/16"},
+	for _, tt := range vec {
+		err := ValidateOSEClusterConfig(tt.in)
+		if tt.out == nil {
+			g.Expect(err).To(BeNil())
+		} else {
+			g.Expect(err.Error()).To(ContainSubstring(tt.out.Error()))
+		}
 	}
-	err = ValidateClusterConfig(spec2)
-	g.Expect(err).To(HaveOccurred())
-	g.Expect(err.Error()).To(ContainSubstring("must have only one entry"))
 
-	spec3 := configv1.NetworkSpec{
-		ClusterNetwork: []configv1.ClusterNetworkEntry{
-			{CIDR: "70.70.0.0/16", HostPrefix: 24},
-		},
-		ServiceNetwork: []string{"192.168.0.0/16", "10.10.0.0/16"},
-	}
-	err = ValidateClusterConfig(spec3)
-	g.Expect(err).To(HaveOccurred())
-	g.Expect(err.Error()).To(ContainSubstring("must have only one entry"))
+}
 
-	spec4 := configv1.NetworkSpec{
-		ClusterNetwork: []configv1.ClusterNetworkEntry{
-			{CIDR: "70.70.0.0/16", HostPrefix: 24},
-		},
-		ServiceNetwork: []string{"192.168.0.0/116"},
-	}
-	err = ValidateClusterConfig(spec4)
-	g.Expect(err).To(HaveOccurred())
-	g.Expect(err.Error()).To(ContainSubstring("could not parse spec.serviceNetwork"))
+func TestValidateK8SClusterConfig(t *testing.T) {
+	g := NewGomegaWithT(t)
 
-	spec5 := configv1.NetworkSpec{
-		ClusterNetwork: []configv1.ClusterNetworkEntry{
-			{CIDR: "70.70.0.0/116", HostPrefix: 24},
-		},
-		ServiceNetwork: []string{"192.168.0.0/16"},
+	type testvec struct {
+		in  *operv1.ClusterNetworkConfigDefinition
+		out error
 	}
-	err = ValidateClusterConfig(spec5)
-	g.Expect(err).To(HaveOccurred())
-	g.Expect(err.Error()).To(ContainSubstring("could not parse spec.clusterNetwork"))
+	vec := []testvec{
+		{
+			in:  &operv1.ClusterNetworkConfigDefinition{},
+			out: errors.Errorf("invalid service network cidr found "),
+		},
+		{
+			in: &operv1.ClusterNetworkConfigDefinition{
+				ServiceNetworkCIDR:         "192.168.0.0/16",
+				ClusterNetworkCIDR:         "70.70.0.0/16",
+				ClusterNetworkSubnetLength: 20,
+			},
+			out: nil,
+		},
+		{
+			in: &operv1.ClusterNetworkConfigDefinition{
+				ServiceNetworkCIDR:         "192.168.0.0/16",
+				ClusterNetworkCIDR:         "192.168.0/18",
+				ClusterNetworkSubnetLength: 20,
+			},
+			out: errors.Errorf("invalid pod network cidr found 192.168.0/18"),
+		},
+		{
+			in: &operv1.ClusterNetworkConfigDefinition{
+				ServiceNetworkCIDR:         "192.168.0.0/16",
+				ClusterNetworkCIDR:         "192.168.0.0/18",
+				ClusterNetworkSubnetLength: 20,
+			},
+			out: errors.Errorf("CIDRs 192.168.0.0/16 and 192.168.0.0/18 overlap"),
+		},
+		{
+			in: &operv1.ClusterNetworkConfigDefinition{
+				ServiceNetworkCIDR:         "192.168.0.0/16",
+				ClusterNetworkCIDR:         "70.70.0.0/18",
+				ClusterNetworkSubnetLength: 16,
+			},
+			out: errors.Errorf("subnet length 16 is larger than its cidr 70.70.0.0/18"),
+		},
+		{
+			in: &operv1.ClusterNetworkConfigDefinition{
+				ServiceNetworkCIDR:         "192.168.0.0/16",
+				ClusterNetworkCIDR:         "70.70.0.0/18",
+				ClusterNetworkSubnetLength: 31,
+			},
+			out: errors.Errorf("subnet length 31 is too small, must be a /30 or larger"),
+		},
+	}
 
-	spec6 := configv1.NetworkSpec{
-		ClusterNetwork: []configv1.ClusterNetworkEntry{
-			{CIDR: "70.70.0.0/16", HostPrefix: 15},
-		},
-		ServiceNetwork: []string{"192.168.0.0/16"},
+	for _, tt := range vec {
+		err := ValidateK8SClusterConfig(tt.in)
+		if tt.out == nil {
+			g.Expect(err).To(BeNil())
+		} else {
+			g.Expect(err.Error()).To(Equal(tt.out.Error()))
+		}
 	}
-	err = ValidateClusterConfig(spec6)
-	g.Expect(err).To(HaveOccurred())
-	g.Expect(err.Error()).To(ContainSubstring("is larger than its cidr"))
 
-	spec7 := configv1.NetworkSpec{
-		ClusterNetwork: []configv1.ClusterNetworkEntry{
-			{CIDR: "70.70.0.0/16", HostPrefix: 31},
-		},
-		ServiceNetwork: []string{"192.168.0.0/16"},
-	}
-	err = ValidateClusterConfig(spec7)
-	g.Expect(err).To(HaveOccurred())
-	g.Expect(err.Error()).To(ContainSubstring("is too small"))
 }

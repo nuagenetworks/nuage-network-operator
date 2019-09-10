@@ -86,12 +86,17 @@ func schema_pkg_apis_operator_v1alpha1_NuageCNIConfigSpec(ref common.ReferenceCa
 							Ref: ref("github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.ReleaseConfigDefinition"),
 						},
 					},
+					"podNetworkConfig": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.PodNetworkConfigDefinition"),
+						},
+					},
 				},
-				Required: []string{"vrsConfig", "cniConfig", "monitorConfig", "releaseConfig"},
+				Required: []string{"vrsConfig", "cniConfig", "monitorConfig", "releaseConfig", "podNetworkConfig"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.CNIConfigDefinition", "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.MonitorConfigDefinition", "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.ReleaseConfigDefinition", "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.VRSConfigDefinition"},
+			"github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.CNIConfigDefinition", "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.MonitorConfigDefinition", "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.PodNetworkConfigDefinition", "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.ReleaseConfigDefinition", "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1.VRSConfigDefinition"},
 	}
 }
 
