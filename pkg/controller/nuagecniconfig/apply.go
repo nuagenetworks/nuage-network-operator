@@ -2,8 +2,8 @@ package nuagecniconfig
 
 import (
 	"context"
+	"strings"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -14,13 +14,13 @@ func (r *ReconcileNuageCNIConfig) ApplyObject(nsn types.NamespacedName, obj runt
 	tmp := obj.DeepCopyObject()
 
 	err := r.client.Get(context.TODO(), nsn, tmp)
-	if err != nil && apierrors.IsNotFound(err) {
+	if err != nil && strings.Contains(err.Error(), "not found") {
 		err = r.client.Create(context.TODO(), obj)
 		if err != nil {
 			return err
 		}
 		return nil
-	} else if err != nil {
+	} else if err != nil && strings.Contains(err.Error(), "already exists") {
 		return err
 	}
 
