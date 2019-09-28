@@ -12,6 +12,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/api/network"
 	osv1 "github.com/openshift/api/route/v1"
+	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -200,10 +201,10 @@ func TestReconcile(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(vrsDS.GetName()).To(Equal("nuage-vrs"))
 
-	releaseConfig := corev1.ConfigMap{}
-	err = r.client.Get(context.TODO(), nsn, &releaseConfig)
+	rc := corev1.ConfigMap{}
+	err = r.client.Get(context.TODO(), releaseConfig, &rc)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(releaseConfig.GetName()).To(Equal(names.ConfigName))
+	g.Expect(rc.GetName()).To(Equal(names.NuageReleaseConfig))
 
 	//This reconcile should be a no op
 	res, err = r.Reconcile(reconcile.Request{types.NamespacedName{Name: "nuage-network"}})
@@ -216,4 +217,36 @@ func TestReconcile(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(res).ToNot(BeNil())
 
+}
+
+func TestBuildApiServerURL(t *testing.T) {
+	g := NewGomegaWithT(t)
+
+	type testvec struct {
+		url  string
+		port string
+		out  string
+		err  error
+	}
+
+	vec := []testvec{
+		testvec{"a", "b", "https://a:b", nil},
+		testvec{"", "b", "", errors.Errorf("service host nor service port")},
+		testvec{"", "", "", errors.Errorf("service host nor service port")},
+	}
+
+	var out string
+	for _, tt := range vec {
+		err := os.Setenv("KUBERNETES_SERVICE_HOST", tt.url)
+		g.Expect(err).ToNot(HaveOccurred())
+		err = os.Setenv("KUBERNETES_SERVICE_PORT", tt.port)
+		g.Expect(err).ToNot(HaveOccurred())
+		out, err = buildAPIServerURL()
+		if tt.err == nil {
+			g.Expect(err).ToNot(HaveOccurred())
+		} else {
+			g.Expect(err.Error()).To(ContainSubstring(tt.err.Error()))
+		}
+		g.Expect(out).To(Equal(tt.out))
+	}
 }

@@ -85,7 +85,7 @@ func TestGetClusterConfig(t *testing.T) {
 	}
 
 	cnf, err := r.GetClusterNetworkInfo()
-	g.Expect(err).To(BeNil())
+	g.Expect(err).ToNot(BeNil())
 	g.Expect(cnf).To(BeNil())
 
 	c := &configv1.Network{

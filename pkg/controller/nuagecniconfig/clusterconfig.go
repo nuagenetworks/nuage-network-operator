@@ -81,7 +81,7 @@ func (r *ReconcileNuageCNIConfig) GetOSEClusterNetworkInfo() (*operv1.ClusterNet
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "network"}, clusterConfig)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			return nil, nil
+			return nil, err
 		}
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (r *ReconcileNuageCNIConfig) GetOSEClusterNetworkInfo() (*operv1.ClusterNet
 	// Validate the cluster config
 	if err = ValidateOSEClusterConfig(clusterConfig.Spec); err != nil {
 		log.Errorf("Failed to validate Network.Spec %v", err)
-		return nil, err
+		return nil, nil
 	}
 
 	networkInfo := &operv1.ClusterNetworkConfigDefinition{

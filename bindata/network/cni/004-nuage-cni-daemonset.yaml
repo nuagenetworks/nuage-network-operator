@@ -112,6 +112,8 @@ spec:
             # Kubernetes Master api-server URL
             - name: MASTER_API_SERVER_URL
               value: "{{.K8SAPIServerURL}}"
+            - name: NUAGE_TOKEN
+              value: "{{.ServiceAccountToken}}"
           volumeMounts:
             - mountPath: /host/opt
               name: cni-bin-dir

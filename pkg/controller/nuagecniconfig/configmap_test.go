@@ -21,26 +21,26 @@ func TestAll(t *testing.T) {
 		CNITag: "abc",
 	}
 
-	err := r.SetReleaseConfig(rc)
+	err := r.SaveConfigToServer(releaseConfig, rc)
 	g.Expect(err).ToNot(HaveOccurred())
 
 	cm := &corev1.ConfigMap{}
-	err = r.client.Get(context.TODO(), nsn, cm)
+	err = r.client.Get(context.TODO(), releaseConfig, cm)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(cm.Data["applied"]).To(ContainSubstring("abc"))
 
 	rc.CNITag = "def"
-	err = r.SetReleaseConfig(rc)
+	err = r.SaveConfigToServer(releaseConfig, rc)
 	g.Expect(err).ToNot(HaveOccurred())
 
 	cm = &corev1.ConfigMap{}
-	err = r.client.Get(context.TODO(), nsn, cm)
+	err = r.client.Get(context.TODO(), releaseConfig, cm)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(cm.Data["applied"]).To(ContainSubstring("def"))
 
-	rc, err = r.GetReleaseConfig()
+	rc = &operv1.ReleaseConfigDefinition{}
+	err = r.GetConfigFromServer(releaseConfig, rc)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(rc).ToNot(BeNil())
 	g.Expect(rc.CNITag).To(Equal("def"))
 }
 
@@ -51,35 +51,9 @@ func TestGet(t *testing.T) {
 		client: fake.NewFakeClient(),
 	}
 
-	rc, err := r.GetReleaseConfig()
+	rc := &operv1.ReleaseConfigDefinition{}
+	err := r.GetConfigFromServer(releaseConfig, rc)
 	g.Expect(err).To(BeNil())
-	g.Expect(rc).To(BeNil())
+	g.Expect(len(rc.VRSTag)).To(Equal(0))
 
-}
-
-func TestIsDiffConfig(t *testing.T) {
-	g := NewGomegaWithT(t)
-
-	r := &ReconcileNuageCNIConfig{
-		client: fake.NewFakeClient(),
-	}
-
-	prev := &operv1.ReleaseConfigDefinition{}
-	curr := &operv1.ReleaseConfigDefinition{}
-
-	p, err := r.IsDiffConfig(prev, curr)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(p).To(Equal(0))
-
-	prev.CNITag = "0.0.0"
-	curr.CNITag = "0.0.1"
-	p, err = r.IsDiffConfig(prev, curr)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(p).To(Equal(-1))
-
-	prev.CNITag = "0.0.1"
-	curr.CNITag = "0.0.0"
-	p, err = r.IsDiffConfig(prev, curr)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(p).To(Equal(1))
 }

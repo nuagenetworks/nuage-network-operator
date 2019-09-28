@@ -4,21 +4,22 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"reflect"
 
 	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/certs"
+	"github.com/nuagenetworks/nuage-network-operator/pkg/names"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/network/cni"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/network/monitor"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/network/vrs"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/render"
 	"github.com/openshift/api/network"
 	log "github.com/sirupsen/logrus"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -65,6 +66,12 @@ func newReconciler(mgr manager.Manager) (reconcile.Reconciler, error) {
 	r.orchestrator, err = r.getOrchestratorType()
 	if err != nil {
 		log.Errorf("orchestrator type could not be set %v", err)
+		return &ReconcileNuageCNIConfig{}, err
+	}
+
+	r.serviceAccountToken, err = r.createServiceAccountToken()
+	if err != nil {
+		log.Errorf("creating service account token failed %v", err)
 		return &ReconcileNuageCNIConfig{}, err
 	}
 
@@ -129,6 +136,7 @@ type ReconcileNuageCNIConfig struct {
 	orchestrator               OrchestratorType
 	clusterNetworkCIDR         string
 	apiServerURL               string
+	serviceAccountToken        []byte
 	clusterNetworkSubnetLength uint32
 }
 
@@ -153,7 +161,7 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 
 	if err := r.parse(instance); err != nil {
 		log.Errorf("failed to parse crd config %v", err)
-		return reconcile.Result{}, err
+		return reconcile.Result{}, nil
 	}
 
 	if r.orchestrator == OrchestratorKubernetes {
@@ -173,29 +181,32 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 	}
 
 	//TODO: Get the previous config
-	isUpdate := true
-	if rc, err := r.GetReleaseConfig(); err == nil && rc == nil {
+	rc := &operv1.ReleaseConfigDefinition{}
+	if err := r.GetConfigFromServer(releaseConfig, rc); err == nil && len(rc.VRSTag) == 0 {
 		log.Infof("no previous config found. creating objects first time")
-		isUpdate = false
 	} else {
 		if err != nil {
 			log.Errorf("getting release config failed %v", err)
 			return reconcile.Result{}, err
 		}
-		if p, _ := r.IsDiffConfig(rc, &instance.Spec.ReleaseConfig); p == 0 {
+
+		if reflect.DeepEqual(rc, &instance.Spec.ReleaseConfig) {
 			log.Warnf("no config differences found. skipping reconcile")
 			return reconcile.Result{}, nil
 		}
 	}
 
-	log.Debugf("cluster network %v\n", clusterInfo)
-	log.Debugf("operator network %v\n", instance)
-	log.Debugf("%v\n", isUpdate)
-
 	certificates := &operv1.TLSCertificates{}
-	certificates, err = certs.GenerateCertificates(&operv1.CertGenConfig{})
-	if err != nil {
-		log.Errorf("failed to generate certs %v", err)
+	if err := r.GetConfigFromServer(certConfig, certificates); err == nil && certificates.CA == nil {
+		log.Infof("no previous certificates found. creating certs first time")
+
+		certificates, err = certs.GenerateCertificates(&operv1.CertGenConfig{})
+		if err != nil {
+			log.Errorf("failed to generate certs %v", err)
+			return reconcile.Result{}, err
+		}
+	} else if err != nil {
+		log.Errorf("getting previous certificates failed %v", err)
 		return reconcile.Result{}, err
 	}
 
@@ -203,6 +214,7 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 	renderData := render.MakeRenderData(&operv1.RenderConfig{
 		instance.Spec,
 		r.apiServerURL,
+		string(r.serviceAccountToken),
 		certificates,
 		clusterInfo,
 	})
@@ -216,31 +228,15 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 
 	//Create or update the objects against API server
 	for _, obj := range objs {
-		if isUpdate {
-			ds := appsv1.DaemonSet{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "DaemonSet",
-					APIVersion: "apps/v1",
-				},
-			}
-			if obj.GroupVersionKind().String() != ds.GroupVersionKind().String() {
-				continue
-			}
-			if err := r.client.Update(context.TODO(), obj); err != nil {
-				log.Errorf("error updating the object %v", err)
-				return reconcile.Result{}, err
-			}
-		} else {
-			if err := r.client.Create(context.TODO(), obj); err != nil {
-				log.Errorf("error creating the object %v", err)
-				if !errors.IsAlreadyExists(err) {
-					return reconcile.Result{}, err
-				}
-			}
+		if err := r.ApplyObject(types.NamespacedName{
+			Name:      obj.GetName(),
+			Namespace: obj.GetNamespace(),
+		}, obj); err != nil {
+			log.Errorf("failed creating object, name %s namespace %s type %s", obj.GetName(), obj.GetNamespace(), obj.GroupVersionKind())
 		}
 	}
 
-	if err := r.SetReleaseConfig(&instance.Spec.ReleaseConfig); err != nil {
+	if err := r.SaveConfigToServer(releaseConfig, &instance.Spec.ReleaseConfig); err != nil {
 		log.Errorf("saving the release config failed %v", err)
 		return reconcile.Result{}, err
 	}
@@ -304,4 +300,37 @@ func (r *ReconcileNuageCNIConfig) parse(instance *operv1.NuageCNIConfig) error {
 func (r *ReconcileNuageCNIConfig) setPodNetworkConfig(p *operv1.PodNetworkConfigDefinition) {
 	r.clusterNetworkCIDR = p.ClusterNetworkCIDR
 	r.clusterNetworkSubnetLength = p.SubnetLength
+}
+
+func (r *ReconcileNuageCNIConfig) createServiceAccountToken() ([]byte, error) {
+	err := r.CreateServiceAccount(names.ServiceAccountName, names.Namespace)
+	if err != nil {
+		log.Errorf("failed to create service account %v", err)
+		return []byte{}, err
+	}
+
+	sa, err := r.GetServiceAccount(names.ServiceAccountName, names.Namespace)
+	if err != nil {
+		log.Errorf("failed to get service account %v", err)
+		return []byte{}, err
+	}
+
+	secrets := r.ExtractSecrets(sa)
+	if len(secrets) == 0 {
+		return []byte{}, fmt.Errorf("expected atleast one secret in service account. found zero")
+	}
+
+	secret, err := r.GetSecret(secrets[0].Name, secrets[0].Namespace)
+	if err != nil {
+		log.Errorf("failed to get secret for sa %s in ns %s", secrets[0].Name, secrets[0].Namespace)
+		return []byte{}, err
+	}
+
+	token, err := r.ExtractSecretToken(secret)
+	if err != nil {
+		log.Errorf("token extraction failed %v", err)
+		return []byte{}, err
+	}
+
+	return token, nil
 }

@@ -161,6 +161,7 @@ type TLSCertificates struct {
 type RenderConfig struct {
 	NuageCNIConfigSpec
 	K8SAPIServerURL      string
+	ServiceAccountToken  string
 	Certificates         *TLSCertificates
 	ClusterNetworkConfig *ClusterNetworkConfigDefinition
 }

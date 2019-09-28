@@ -20,7 +20,7 @@ data:
       # URL of the VSD Architect
       vsdApiUrl: https://{{.MonitorConfig.VSDAddress}}:{{.MonitorConfig.VSDPort}}
       # API version to query against
-      vspVersion: v5_0
+      vspVersion: v6
       # Name of the enterprise in which pods will reside
       enterpriseName: {{.MonitorConfig.VSDMetadata.Enterprise}}
       # Name of the domain in which pods will reside
@@ -55,9 +55,9 @@ data:
 {{.Certificates.PrivateKey | indent 12}}
       # etcd config required for HA
       etcdClientConfig:
-          ca: ""
-          certFile: ""
-          keyFile: ""
+          ca: /etc/kubernetes/pki/etcd/ca.crt
+          certFile: /etc/kubernetes/pki/etcd/peer.crt
+          keyFile: /etc/kubernetes/pki/etcd/ca.key
           urls:
             - https://127.0.0.1:2379
       # auto scale subnets feature

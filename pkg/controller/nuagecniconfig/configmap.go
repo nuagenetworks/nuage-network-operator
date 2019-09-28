@@ -1,11 +1,9 @@
 package nuagecniconfig
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 
-	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/names"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -13,62 +11,31 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var nsn = types.NamespacedName{
+var certConfig = types.NamespacedName{
 	Namespace: names.Namespace,
-	Name:      names.ConfigName,
+	Name:      names.NuageCertConfig,
 }
 
-// GetReleaseConfig fetches the previous applied release config
-func (r *ReconcileNuageCNIConfig) GetReleaseConfig() (*operv1.ReleaseConfigDefinition, error) {
-	cm := &corev1.ConfigMap{}
-	err := r.client.Get(context.TODO(), nsn, cm)
-	if err != nil && apierrors.IsNotFound(err) {
-		return nil, nil
-	} else if err != nil {
-		return nil, err
-	}
-
-	c := &operv1.ReleaseConfigDefinition{}
-	err = json.Unmarshal([]byte(cm.Data["applied"]), c)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
+var releaseConfig = types.NamespacedName{
+	Namespace: names.Namespace,
+	Name:      names.NuageReleaseConfig,
 }
 
-//SetReleaseConfig stores the applied release config in api server
-func (r *ReconcileNuageCNIConfig) SetReleaseConfig(c *operv1.ReleaseConfigDefinition) error {
-	app, err := json.Marshal(c)
-	if err != nil {
-		return err
-	}
+//CreateConfigMap creates a config map on api server
+func (r *ReconcileNuageCNIConfig) CreateConfigMap(nsn types.NamespacedName, data string) error {
 	cm := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: names.Namespace,
-			Name:      names.ConfigName,
+			Name:      nsn.Name,
+			Namespace: nsn.Namespace,
 		},
-		Data: map[string]string{
-			"applied": string(app),
-		},
+		Data: map[string]string{"applied": data},
 	}
 
-	err = r.client.Get(context.TODO(), nsn, cm)
-	if err != nil && apierrors.IsNotFound(err) {
-		err = r.client.Create(context.TODO(), cm)
-		if err != nil {
-			return err
-		}
-		return nil
-	} else if err != nil {
-		return err
-	}
-
-	cm.Data["applied"] = string(app)
-	err = r.client.Update(context.TODO(), cm)
+	err := r.ApplyObject(nsn, cm)
 	if err != nil {
 		return err
 	}
@@ -76,19 +43,44 @@ func (r *ReconcileNuageCNIConfig) SetReleaseConfig(c *operv1.ReleaseConfigDefini
 	return nil
 }
 
-//IsDiffConfig return 0 if both the configs are same
-func (r *ReconcileNuageCNIConfig) IsDiffConfig(prev, curr *operv1.ReleaseConfigDefinition) (int, error) {
-	var s1, s2 []byte
-	var err error
-
-	s1, err = json.Marshal(prev)
+//GetConfigMap get a config map from api server
+func (r *ReconcileNuageCNIConfig) GetConfigMap(nsn types.NamespacedName) (*corev1.ConfigMap, error) {
+	cm := &corev1.ConfigMap{}
+	err := r.client.Get(context.TODO(), nsn, cm)
 	if err != nil {
-		return -1, err
-	}
-	s2, err = json.Marshal(curr)
-	if err != nil {
-		return -1, err
+		return nil, err
 	}
 
-	return bytes.Compare(s1, s2), err
+	return cm, nil
+}
+
+//SaveConfigToServer stores the applied release config in api server
+func (r *ReconcileNuageCNIConfig) SaveConfigToServer(nsn types.NamespacedName, c interface{}) error {
+	app, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	err = r.CreateConfigMap(nsn, string(app))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+//GetConfigFromServer fetches the stored config from server
+func (r *ReconcileNuageCNIConfig) GetConfigFromServer(nsn types.NamespacedName, c interface{}) error {
+	cm, err := r.GetConfigMap(nsn)
+	if err != nil && apierrors.IsNotFound(err) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal([]byte(cm.Data["applied"]), c)
+	if err != nil {
+		return err
+	}
+	return nil
 }
