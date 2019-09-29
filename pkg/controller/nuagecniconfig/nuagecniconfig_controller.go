@@ -312,26 +312,15 @@ func (r *ReconcileNuageCNIConfig) setPodNetworkConfig(p *operv1.PodNetworkConfig
 }
 
 func (r *ReconcileNuageCNIConfig) createServiceAccountToken() ([]byte, error) {
-	err := r.CreateServiceAccount(names.ServiceAccountName, names.Namespace)
-	if err != nil {
-		log.Errorf("failed to create service account %v", err)
-		return []byte{}, err
-	}
+	//	err := r.CreateServiceAccount(names.ServiceAccountName, names.Namespace)
+	//	if err != nil {
+	//		log.Errorf("failed to create service account %v", err)
+	//		return []byte{}, err
+	//	}
 
-	sa, err := r.GetServiceAccount(names.ServiceAccountName, names.Namespace)
+	secret, err := r.GetSecret(names.ServiceAccountName, names.Namespace)
 	if err != nil {
-		log.Errorf("failed to get service account %v", err)
-		return []byte{}, err
-	}
-
-	secrets := r.ExtractSecrets(sa)
-	if len(secrets) == 0 {
-		return []byte{}, fmt.Errorf("expected atleast one secret in service account. found zero")
-	}
-
-	secret, err := r.GetSecret(secrets[0].Name, secrets[0].Namespace)
-	if err != nil {
-		log.Errorf("failed to get secret for sa %s in ns %s", secrets[0].Name, secrets[0].Namespace)
+		log.Errorf("failed to get secret for sa %s in ns %s", names.ServiceAccountName, names.Namespace)
 		return []byte{}, err
 	}
 

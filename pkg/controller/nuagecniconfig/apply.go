@@ -20,7 +20,7 @@ func (r *ReconcileNuageCNIConfig) ApplyObject(nsn types.NamespacedName, obj runt
 			return err
 		}
 		return nil
-	} else if err != nil && strings.Contains(err.Error(), "already exists") {
+	} else if err != nil && !strings.Contains(err.Error(), "already exists") {
 		return err
 	}
 

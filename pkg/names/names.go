@@ -10,5 +10,5 @@ const (
 	// NuageCertConfig is name of the config map used to store release config
 	NuageCertConfig = "nuage-cert-config"
 	// ServiceAccountName is the name of the service account used for cni
-	ServiceAccountName = "nuage-cni-host"
+	ServiceAccountName = "default"
 )

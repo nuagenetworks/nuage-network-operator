@@ -1,62 +1,62 @@
 package nuagecniconfig
 
 import (
-	"context"
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
-//CreateServiceAccount creates a service account
-func (r *ReconcileNuageCNIConfig) CreateServiceAccount(name, namespace string) error {
-	sa := &corev1.ServiceAccount{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "ServiceAccount",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-			Name:      name,
-		},
-	}
+////CreateServiceAccount creates a service account
+//func (r *ReconcileNuageCNIConfig) CreateServiceAccount(name, namespace string) error {
+//	sa := &corev1.ServiceAccount{
+//		TypeMeta: metav1.TypeMeta{
+//			APIVersion: "v1",
+//			Kind:       "ServiceAccount",
+//		},
+//		ObjectMeta: metav1.ObjectMeta{
+//			Namespace: namespace,
+//			Name:      name,
+//		},
+//	}
+//
+//	err := r.ApplyObject(types.NamespacedName{
+//		Namespace: namespace,
+//		Name:      name,
+//	}, sa)
+//	if err != nil {
+//		return err
+//	}
+//
+//	return nil
+//}
 
-	err := r.ApplyObject(types.NamespacedName{
-		Namespace: namespace,
-		Name:      name,
-	}, sa)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-//GetServiceAccount fetch the service account
-func (r *ReconcileNuageCNIConfig) GetServiceAccount(name, namespace string) (*corev1.ServiceAccount, error) {
-	sa, err := r.clientset.CoreV1().ServiceAccounts(namespace).Get(name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	return sa, nil
-}
+////GetServiceAccount fetch the service account
+//func (r *ReconcileNuageCNIConfig) GetServiceAccount(name, namespace string) (*corev1.ServiceAccount, error) {
+//	sa, err := r.clientset.CoreV1().ServiceAccounts(namespace).Get(name, metav1.GetOptions{})
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	log.Errorf("%v", sa)
+//	return sa, nil
+//}
 
 //GetSecret fetches secret from api server
-func (r *ReconcileNuageCNIConfig) GetSecret(name, namespace string) (*corev1.Secret, error) {
-	s := &corev1.Secret{}
-	ns := types.NamespacedName{
-		Namespace: namespace,
-		Name:      name,
-	}
+func (r *ReconcileNuageCNIConfig) GetSecret(saname, namespace string) (*corev1.Secret, error) {
 
-	err := r.client.Get(context.TODO(), ns, s)
+	secList, err := r.clientset.CoreV1().Secrets(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	return s, nil
+	for _, sec := range secList.Items {
+		if sec.ObjectMeta.Annotations["kubernetes.io/service-account.name"] == saname {
+			return &sec, nil
+		}
+	}
+
+	return nil, fmt.Errorf("could not find the secret")
 }
 
 //ExtractSecretToken extract the token from the secret
@@ -69,7 +69,7 @@ func (r *ReconcileNuageCNIConfig) ExtractSecretToken(s *corev1.Secret) ([]byte, 
 	return token, nil
 }
 
-//ExtractSecrets extracts secret name from service account yaml
-func (r *ReconcileNuageCNIConfig) ExtractSecrets(sa *corev1.ServiceAccount) []corev1.ObjectReference {
-	return sa.Secrets
-}
+////ExtractSecrets extracts secret name from service account yaml
+//func (r *ReconcileNuageCNIConfig) ExtractSecrets(sa *corev1.ServiceAccount) []corev1.ObjectReference {
+//	return sa.Secrets
+//}
