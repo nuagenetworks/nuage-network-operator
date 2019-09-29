@@ -73,8 +73,8 @@ spec:
         username: username
         password: password
      vrsTag: 135.115.177.175:5000/nuage/vrs:5.4.1-72
-     cniTag: 0.0.0-1
-     monitorTag: 0.0.0-1
+     cniTag: 135.115.177.175:5000/nuage/cni:beta1
+     monitorTag: 135.115.177.175:5000/nuage/monitor:beta1
   cniConfig:
      mtu: 1450
      loadBalancerURL: https://172.22.62.52:9443
