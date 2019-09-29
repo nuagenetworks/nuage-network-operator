@@ -27,7 +27,7 @@ spec:
         # This container installs Nuage VRS running as a
         # container on each worker node
         - name: nuage-vrs
-          image: {{.ReleaseConfig.VRSTag}}
+          image: "{{.ReleaseConfig.VRSTag}}"
           securityContext:
             privileged: true
           env:

@@ -8,10 +8,8 @@ data:
   # This will generate the required Nuage vsp-k8s.yaml
   # config on each slave node
   plugin_yaml_config: |
-      {{with .CNIConfig.KubeConfig}}
       # Path to Nuage kubeconfig
       kubeConfig: /usr/share/vsp-k8s/nuage.kubeconfig
-      {{end}}
       # Name of the enterprise in which pods will reside
       enterpriseName: "{.MonitorConfig.VSDMetadata.Enterprise}"
       # Name of the domain in which pods will reside
@@ -83,7 +81,7 @@ spec:
         # This container installs Nuage CNI binaries
         # and CNI network config file on each node.
         - name: nuage-cni
-          image: {{.ReleaseConfig.CNITag}}
+          image: "{{.ReleaseConfig.CNITag}}"
           command: ["/install-cni.sh"]
           args: ["nuage-cni-k8s"]
           securityContext:

@@ -5,27 +5,76 @@ metadata:
 spec:
   vrsConfig:
      controllers:
-        - 10.10.10.100
-        - 10.10.10.101
+        - 172.22.62.28
      underlayUplink: eth0
   monitorConfig:
-     vsdURL: https://10.10.10.102:8443
+     vsdAddress: host-62-30.openstack.local
+     vsdPort: 7443
      vsdMetadata:
-        enterprise: nuage
-        domain: nuage
+        enterprise: operator-demo
+        domain: operator-demo
         user: nuage
-        userCert: cert
-        userKey: key
+        userCert: |
+          MIIEKTCCAxGgAwIBAgIIJuJkuUChB5IwDQYJKoZIhvcNAQELBQAwEDEOMAwGA1UE
+          AwwFVlNQQ0EwHhcNMTkwOTI5MDEyNTIzWhcNMjEwOTI4MDEyNTIzWjAoMQ4wDAYD
+          VQQDDAVudWFnZTEWMBQGA1UECgwNb3BlcmF0b3ItZGVtbzCCASIwDQYJKoZIhvcN
+          AQEBBQADggEPADCCAQoCggEBAKnG0vF5UpH44AIIGcnQBUZhDXB5cvIP/dE6fPn4
+          InkS1ovGxb1ZG2Pijj1x0FhiwpW2oY/P//cZ5Mp2bHnjHqUdb2Pw+sdqy0MhftC3
+          suwqJnlnur2ovMTkE1lvE4bUAjEaFN5wszTRmRG1LVj92Zsx4XmyxXhklYRo/4/N
+          KZaJVefGYJvAl7MKflMSPVxguK2rnaIWgIutbdzT/TMcVvGPthil2cNOZDR3uAQY
+          ObOsFyoWLlzFcbbUXIgdb1vNS434FkrgDTqkCuJeE3va2bWh5FKbBOqxefNXqZE0
+          zv2w33rk/8OHHCGbqHuSroKcj3WmKFqp0KU8wcfw5DB8LOMCAwEAAaOCAW0wggFp
+          MAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAULlgG3CCTWLXRpw0oc3H3ibCJmr8w
+          XgYIKwYBBQUHAQEEUjBQME4GCCsGAQUFBzABhkJodHRwOi8vaG9zdC02Mi0zMC5v
+          cGVuc3RhY2subG9jYWw6NzA4MC9lamJjYS9wdWJsaWN3ZWIvc3RhdHVzL29jc3Aw
+          HQYDVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMEMIGJBgNVHR8EgYEwfzB9oGWg
+          Y4ZhaHR0cDovL2hvc3QtNjItMzAub3BlbnN0YWNrLmxvY2FsOjcwODAvZWpiY2Ev
+          cHVibGljd2ViL3dlYmRpc3QvY2VydGRpc3Q/Y21kPWNybCZpc3N1ZXI9Q04lM0RW
+          U1BDQaIUpBIwEDEOMAwGA1UEAwwFVlNQQ0EwHQYDVR0OBBYEFCTIIOysoqGubh7d
+          o2AiOpAzMor8MA4GA1UdDwEB/wQEAwIF4DANBgkqhkiG9w0BAQsFAAOCAQEAMcQN
+          o4dgCFgGMmi+vs4E6StN1fLfZ4bkhxBC5FNtdeOFtopF+M91HmynLUOSGt94auTN
+          ihdmPLmnDtqNfwtyaFw2wKjPJhP+c0bQcq016fHM+kvuuoDRtdT/2+mo/l+5F9nk
+          OdeTykprvzriEvFct7i+H35A4ZEZNdmjXV3XF9WixPuVF4z15lRqmsOzxsgd2zLO
+          5XhbzaS+X6gC2l6a6FN5TVLdn2dOBgxEDjUZk9PRXSuAwyLz4Z7/THkAXmTEXXyY
+          qUlCN71qoZZDVBeyDtUQPZ6x2qZYSjd3Yd7oa09y+gCZsvn2XYSltWS2H4Jx9x77
+          mHJYlYTU19nXdDfGsA==
+        userKey: |
+          MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCpxtLxeVKR+OAC
+          CBnJ0AVGYQ1weXLyD/3ROnz5+CJ5EtaLxsW9WRtj4o49cdBYYsKVtqGPz//3GeTK
+          dmx54x6lHW9j8PrHastDIX7Qt7LsKiZ5Z7q9qLzE5BNZbxOG1AIxGhTecLM00ZkR
+          tS1Y/dmbMeF5ssV4ZJWEaP+PzSmWiVXnxmCbwJezCn5TEj1cYLitq52iFoCLrW3c
+          0/0zHFbxj7YYpdnDTmQ0d7gEGDmzrBcqFi5cxXG21FyIHW9bzUuN+BZK4A06pAri
+          XhN72tm1oeRSmwTqsXnzV6mRNM79sN965P/Dhxwhm6h7kq6CnI91pihaqdClPMHH
+          8OQwfCzjAgMBAAECggEAQv0rkJIhbW143fRaUJIe8rUqu12AaFi8+siMNYmd+I3h
+          T8e/kEXPk+r52u7EmYtmYfJs7zTQN6zk5KozhSiDl/z0Tcfw+6x8xWE7C5ngJGVB
+          RxgRy/H/geTIabp1RvbyYnN7FoX7f/TP4/fMC9gl+6GD6SQL3MQ7ZsKTTCdUqIuk
+          5/ZNGT7eNMk1D0/qrIs5gsnAahyAZKCSbyDQHDMrvnyB4vmu0MyUTaafplcmaVQ8
+          GXyQ2CpamPj5B2F8ablYLtqV4dCSjUVKyi6Br4EGFMJKB8nxBhoPGH7UKxyhBFWx
+          OcmodAJm3bL8aLjnIBbh36TAkW++bXnX6eBWzx4YsQKBgQDh4tRymKm1etC+Bq9/
+          2W+Uvqh32sQ9MLxJCmIVySUCZeEm18VowKm9x+CPyh3EdPJ4ZLpFkFIfT4Vqbt4k
+          sp5Ym77eNtAf/et7eh/xofxSjeQJe2QBkXYz7+7ULYqSawg8iuoCoAKY6hCOZX7K
+          q10SI7OVX8FYrQuaCdMQIJyXqwKBgQDAaQ9hk9DEvce/AZo/syKoqSL5Ow0jLfKR
+          nUfEk4Xb3CzMdZj/EXqnaXFqfIl2sg/N0VdVFfRwHqDEk13YN3TXwl62Xd71XdPa
+          e5+oKX8eDP+clvcXdvCtHVuUu+oHqJmDjNg1UtmnBhC/qfpt2sWzuXRABH945d1e
+          eMQAFQMnqQKBgCoExt42VcNjgDcJCVZv/RifSrlY4Y48ZZn0q4A/9Xl3uCVAmAE/
+          bZPW/Yfh4h2sX3pTym6sRQp8AWZmDz6mV1xGRIATlC2PT2Gduxl4t3Yn3NaCtHyy
+          MVnB9RxVCGTqMhMJCDTKzRDi4YeLi8VpkRuRtpM/x7iWIAVcdH2Yg2iXAoGACTH8
+          JjGmPIDFVv+Am6K3+U97+GU2D4RWn1bg4ygZsZQoH+1OzoHLVszXOruQ5jdEQhXL
+          Eqnl8KXGER7p0Td1Qgpr9FMwIJHHWh2mV6cECC+e16DvVhO9FMjeY5FHce5Ax+Sn
+          QIUhGbZUfpRk/3MBF8G5KIYOgXyaw7UJyOc4K2ECgYEA2DnEZFZgOOFl53AJs03z
+          ESZyHtq+b3tQR+fsbBWuxn9KDJzOd2iE36CwrSuCC0BGOvKIoNJVjrd31HeEup4G
+          xaorlR9G4aIvkUuGApLKyL+P5i3hTGvLQ6fDG/mSFoxQ6hlLZFFjjLS83cp3wLmM
+          CHYx8SUxvSFQre71baVfQ2M=
      vsdFlags:
         underlayEnabled: true
   releaseConfig:
      registry:
-        url: https://registry.io/images/
+        url: 135.115.177.175
         username: username
         password: password
-     vrsTag: 0.0.0-1
+     vrsTag: 135.115.177.175:5000/nuage/vrs:5.4.1-72
      cniTag: 0.0.0-1
      monitorTag: 0.0.0-1
   cniConfig:
      mtu: 1450
-     loadBalancerURL: https://127.0.0.1:9443
+     loadBalancerURL: https://172.22.62.52:9443
