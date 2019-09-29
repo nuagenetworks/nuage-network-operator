@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -57,10 +58,17 @@ func newReconciler(mgr manager.Manager) (reconcile.Reconciler, error) {
 		return &ReconcileNuageCNIConfig{}, err
 	}
 
+	clientset, err := kubernetes.NewForConfig(mgr.GetConfig())
+	if err != nil {
+		log.Errorf("creating new direct client failed")
+		return &ReconcileNuageCNIConfig{}, err
+	}
+
 	r := &ReconcileNuageCNIConfig{
-		client:  mgr.GetClient(),
-		scheme:  mgr.GetScheme(),
-		dclient: dc,
+		client:    mgr.GetClient(),
+		scheme:    mgr.GetScheme(),
+		dclient:   dc,
+		clientset: clientset,
 	}
 
 	r.orchestrator, err = r.getOrchestratorType()
@@ -138,6 +146,7 @@ type ReconcileNuageCNIConfig struct {
 	apiServerURL               string
 	serviceAccountToken        []byte
 	clusterNetworkSubnetLength uint32
+	clientset                  *kubernetes.Clientset
 }
 
 // Reconcile reads that state of the cluster for a NuageCNIConfig object and makes changes based on the state read

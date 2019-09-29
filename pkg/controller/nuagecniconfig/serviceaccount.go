@@ -35,13 +35,7 @@ func (r *ReconcileNuageCNIConfig) CreateServiceAccount(name, namespace string) e
 
 //GetServiceAccount fetch the service account
 func (r *ReconcileNuageCNIConfig) GetServiceAccount(name, namespace string) (*corev1.ServiceAccount, error) {
-	sa := &corev1.ServiceAccount{}
-	san := types.NamespacedName{
-		Namespace: namespace,
-		Name:      name,
-	}
-
-	err := r.client.Get(context.TODO(), san, sa)
+	sa, err := r.clientset.CoreV1().ServiceAccounts(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
