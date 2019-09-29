@@ -109,7 +109,7 @@ spec:
       containers:
         # This container configures Nuage Master node
         - name: nuage-monitor
-          image: nuage/master:{{.ReleaseConfig.MonitorTag}}
+          image: {{.ReleaseConfig.MonitorTag}}
           ports:
             - containerPort: {{.MonitorConfig.RestServerPort}}
               hostPort: {{.MonitorConfig.RestServerPort}}

@@ -83,7 +83,7 @@ spec:
         # This container installs Nuage CNI binaries
         # and CNI network config file on each node.
         - name: nuage-cni
-          image: nuage/cni:{{.ReleaseConfig.CNITag}}
+          image: {{.ReleaseConfig.CNITag}}
           command: ["/install-cni.sh"]
           args: ["nuage-cni-k8s"]
           securityContext:
