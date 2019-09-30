@@ -13,7 +13,12 @@ spec:
       labels:
         name: nuage-network-operator
     spec:
+      tolerations:
+      - key:  "node.kubernetes.io/not-ready"
+        operator: "Exists"
+        effect: "NoSchedule"
       serviceAccountName: nuage-network-operator
+      hostNetwork: true
       containers:
         - name: nuage-network-operator
           # Replace this with the built image name

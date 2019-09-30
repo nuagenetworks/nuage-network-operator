@@ -110,9 +110,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = serveCRMetrics(cfg); err != nil {
-		log.Info("Could not generate and serve custom resource metrics: ", err.Error())
-	}
+	//if err = serveCRMetrics(cfg); err != nil {
+	//	log.Info("Could not generate and serve custom resource metrics: ", err.Error())
+	//}
 
 	//	// Create Service object to expose the metrics port.
 	//	_, err = metrics.ExposeMetricsPort(ctx, metricsPort)
