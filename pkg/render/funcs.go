@@ -1,5 +1,9 @@
 package render
 
+import (
+	"strings"
+)
+
 // Functions available for all templates
 
 // getOr returns the value of m[key] if it exists, fallback otherwise.
@@ -34,4 +38,8 @@ func boolToInt(b bool) int {
 		return 1
 	}
 	return 0
+}
+
+func addEscapeChar(s string) string {
+	return strings.Replace(s, "/", "\\\\/", -1)
 }

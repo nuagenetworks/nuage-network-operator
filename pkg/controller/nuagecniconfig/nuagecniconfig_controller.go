@@ -241,8 +241,13 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 			Name:      obj.GetName(),
 			Namespace: obj.GetNamespace(),
 		}, obj); err != nil {
-			log.Errorf("failed creating object, name %s namespace %s type %s", obj.GetName(), obj.GetNamespace(), obj.GroupVersionKind())
+			log.Errorf("failed creating object, name %s namespace %s type %s %v", obj.GetName(), obj.GetNamespace(), obj.GroupVersionKind(), err)
+			log.Errorf("object is %v", obj)
 		}
+	}
+
+	if err := r.LabelMasterNodes(); err != nil {
+		log.Errorf("labeling master node with selector failed %v", err)
 	}
 
 	if err := r.SaveConfigToServer(releaseConfig, &instance.Spec.ReleaseConfig); err != nil {

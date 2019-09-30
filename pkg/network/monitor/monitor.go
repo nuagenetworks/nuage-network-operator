@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
+	"github.com/nuagenetworks/nuage-network-operator/pkg/names"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -86,5 +87,9 @@ func fillDefaults(config *operv1.MonitorConfigDefinition) {
 
 	if len(config.ClusterRoleBindingName) == 0 {
 		config.ClusterRoleBindingName = DefaultResourceName
+	}
+
+	if len(config.MasterNodeSelector) == 0 {
+		config.MasterNodeSelector = names.MasterNodeSelector
 	}
 }

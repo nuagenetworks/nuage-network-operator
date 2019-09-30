@@ -70,7 +70,7 @@ func RenderTemplate(path string, d *RenderData) ([]*unstructured.Unstructured, e
 	}
 
 	// Add universal functions
-	tmpl.Funcs(template.FuncMap{"getOr": getOr, "isSet": isSet, "boolToInt": boolToInt})
+	tmpl.Funcs(template.FuncMap{"getOr": getOr, "isSet": isSet, "boolToInt": boolToInt, "addEscapeChar": addEscapeChar})
 	tmpl.Funcs(sprig.TxtFuncMap())
 
 	source, err := ioutil.ReadFile(path)

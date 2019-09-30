@@ -11,7 +11,7 @@ data:
       # Path to Nuage kubeconfig
       kubeConfig: /usr/share/vsp-k8s/nuage.kubeconfig
       # Name of the enterprise in which pods will reside
-      enterpriseName: "{.MonitorConfig.VSDMetadata.Enterprise}"
+      enterpriseName: "{{.MonitorConfig.VSDMetadata.Enterprise}}"
       # Name of the domain in which pods will reside
       domainName: "{{.MonitorConfig.VSDMetadata.Domain}}"
       # Name of the VSD user in admin group
@@ -71,12 +71,17 @@ spec:
       labels:
         k8s-app: nuage-cni
     spec:
-      hostNetwork: true
+      nodeSelector:
+        beta.kubernetes.io/os: linux
       tolerations:
-        - key: node-role.kubernetes.io/master
-          effect: NoSchedule
+        - effect: NoSchedule
           operator: Exists
-      serviceAccoutName: "{{.CNIConfig.ServiceAccountName}}"
+        - key: CriticalAddonsOnly
+          operator: Exists
+        - effect: NoExecute
+          operator: Exists
+      hostNetwork: true
+      serviceAccountName: "{{.CNIConfig.ServiceAccountName}}"
       containers:
         # This container installs Nuage CNI binaries
         # and CNI network config file on each node.

@@ -20,7 +20,7 @@ data:
       # URL of the VSD Architect
       vsdApiUrl: https://{{.MonitorConfig.VSDAddress}}:{{.MonitorConfig.VSDPort}}
       # API version to query against
-      vspVersion: v6
+      vspVersion: v5_0
       # Name of the enterprise in which pods will reside
       enterpriseName: {{.MonitorConfig.VSDMetadata.Enterprise}}
       # Name of the domain in which pods will reside
@@ -45,7 +45,7 @@ data:
       logLevel: 0
       # Parameters related to the nuage monitor REST server
       nuageMonServer:
-          URL: {{.MonitorConfig.RestServerAddress}}
+          URL: "{{.MonitorConfig.RestServerAddress}}:{{.MonitorConfig.RestServerPort}}"
           certificateDirectory: {{.Certificates.CertificateDir}}
           clientCAData: |
 {{.Certificates.CA | indent 12}}
@@ -57,7 +57,7 @@ data:
       etcdClientConfig:
           ca: /etc/kubernetes/pki/etcd/ca.crt
           certFile: /etc/kubernetes/pki/etcd/peer.crt
-          keyFile: /etc/kubernetes/pki/etcd/ca.key
+          keyFile: /etc/kubernetes/pki/etcd/peer.key
           urls:
             - https://127.0.0.1:2379
       # auto scale subnets feature
@@ -98,14 +98,21 @@ spec:
       labels:
         k8s-app: nuage-monitor
     spec:
-      hostNetwork: true
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+        "{{.MonitorConfig.MasterNodeSelector}}": ""
       tolerations:
+        - effect: NoSchedule
+          operator: Exists
+        - key: CriticalAddonsOnly
+          operator: Exists
+        - effect: NoExecute
+          operator: Exists
         - key: node-role.kubernetes.io/master
           effect: NoSchedule
           operator: Exists
-      nodeSelector:
-        node-role.kubernetes.io/master: ""
-      serviceAccoutName: "{{.MonitorConfig.ServiceAccountName}}"
+      serviceAccountName: "{{.MonitorConfig.ServiceAccountName}}"
+      hostNetwork: true
       containers:
         # This container configures Nuage Master node
         - name: nuage-monitor

@@ -33,6 +33,7 @@ type MonitorConfigDefinition struct {
 	ServiceAccountName     string   `json:"ServiceAccountName,omitempty"`
 	ClusterRoleName        string   `json:"ClusterRoleName,omitempty"`
 	ClusterRoleBindingName string   `json:"ClusterRoleBindingName,omitempty"`
+	MasterNodeSelector     string   `json:"MasterNodeSelector,omitempty"`
 }
 
 // VRSConfigDefinition holds user specified config for VRS
