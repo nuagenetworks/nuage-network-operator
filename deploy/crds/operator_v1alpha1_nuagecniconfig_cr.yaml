@@ -15,6 +15,7 @@ spec:
         domain: operator-demo
         user: nuage
         userCert: |
+          -----BEGIN CERTIFICATE-----
           MIIEKTCCAxGgAwIBAgIIJuJkuUChB5IwDQYJKoZIhvcNAQELBQAwEDEOMAwGA1UE
           AwwFVlNQQ0EwHhcNMTkwOTI5MDEyNTIzWhcNMjEwOTI4MDEyNTIzWjAoMQ4wDAYD
           VQQDDAVudWFnZTEWMBQGA1UECgwNb3BlcmF0b3ItZGVtbzCCASIwDQYJKoZIhvcN
@@ -38,7 +39,9 @@ spec:
           5XhbzaS+X6gC2l6a6FN5TVLdn2dOBgxEDjUZk9PRXSuAwyLz4Z7/THkAXmTEXXyY
           qUlCN71qoZZDVBeyDtUQPZ6x2qZYSjd3Yd7oa09y+gCZsvn2XYSltWS2H4Jx9x77
           mHJYlYTU19nXdDfGsA==
+          -----END CERTIFICATE-----
         userKey: |
+          -----BEGIN PRIVATE KEY-----
           MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCpxtLxeVKR+OAC
           CBnJ0AVGYQ1weXLyD/3ROnz5+CJ5EtaLxsW9WRtj4o49cdBYYsKVtqGPz//3GeTK
           dmx54x6lHW9j8PrHastDIX7Qt7LsKiZ5Z7q9qLzE5BNZbxOG1AIxGhTecLM00ZkR
@@ -65,6 +68,7 @@ spec:
           ESZyHtq+b3tQR+fsbBWuxn9KDJzOd2iE36CwrSuCC0BGOvKIoNJVjrd31HeEup4G
           xaorlR9G4aIvkUuGApLKyL+P5i3hTGvLQ6fDG/mSFoxQ6hlLZFFjjLS83cp3wLmM
           CHYx8SUxvSFQre71baVfQ2M=
+          -----END PRIVATE KEY-----
      vsdFlags:
         underlayEnabled: true
   releaseConfig:
@@ -72,12 +76,12 @@ spec:
         url: 135.115.177.175
         username: username
         password: password
-     vrsTag: 135.115.177.175:5000/nuage/vrs:5.4.1-72
-     cniTag: 135.115.177.175:5000/nuage/cni:beta1
-     monitorTag: 135.115.177.175:5000/nuage/monitor:beta1
+     vrsTag: 135.115.177.175:5000/nuage/vrs:5.4.1-215
+     cniTag: 135.115.177.175:5000/nuage/cni:beta2
+     monitorTag: 135.115.177.175:5000/nuage/monitor:beta2
   cniConfig:
      mtu: 1450
-     loadBalancerURL: https://172.22.62.52:9443
+     loadBalancerURL: https://172.22.62.20:9443
   podNetworkConfig:
      podNetwork: 70.70.0.0/16
      subnetLength: 8
