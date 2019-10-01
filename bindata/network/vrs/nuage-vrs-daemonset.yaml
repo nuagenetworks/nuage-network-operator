@@ -18,11 +18,16 @@ spec:
       labels:
         k8s-app: nuage-vrs
     spec:
-      hostNetwork: true
+      nodeSelector:
+        beta.kubernetes.io/os: linux
       tolerations:
-        - key: node-role.kubernetes.io/master
-          effect: NoSchedule
+        - effect: NoSchedule
           operator: Exists
+        - key: CriticalAddonsOnly
+          operator: Exists
+        - effect: NoExecute
+          operator: Exists
+      hostNetwork: true
       containers:
         # This container installs Nuage VRS running as a
         # container on each worker node
@@ -39,11 +44,11 @@ spec:
               value: "{{index .VRSConfig.Controllers 1}}"
               {{end}}
             - name: NUAGE_PLATFORM
-              value: "{{.VRSConfig.Platform}}"
+              value: "\"{{.VRSConfig.Platform}}\""
             - name: NUAGE_K8S_SERVICE_IPV4_SUBNET
-              value: "{{.ClusterNetworkConfig.ServiceNetworkCIDR}}"
+              value: "{{addEscapeChar .ClusterNetworkConfig.ServiceNetworkCIDR}}"
             - name: NUAGE_K8S_POD_NETWORK_CIDR
-              value: "{{.ClusterNetworkConfig.ClusterNetworkCIDR}}"
+              value: "{{addEscapeChar .ClusterNetworkConfig.ClusterNetworkCIDR}}"
             - name: NUAGE_NETWORK_UPLINK_INTF
               value: "{{.VRSConfig.UnderlayUplink}}"
           volumeMounts:
