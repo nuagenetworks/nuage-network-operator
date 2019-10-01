@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nuage-network-operator
+  namespace: nuage-network-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: nuage-network-operator
+  template:
+    metadata:
+      labels:
+        name: nuage-network-operator
+    spec:
+      tolerations:
+      - key:  "node.kubernetes.io/not-ready"
+        operator: "Exists"
+        effect: "NoSchedule"
+      serviceAccountName: nuage-network-operator
+      hostNetwork: true
+      containers:
+        - name: nuage-network-operator
+          # Replace this with the built image name
+          image: 135.115.177.175:5000/nuage/operator:beta13
+          command:
+          - nuage-network-operator
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              value: ""
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "nuage-network-operator"
