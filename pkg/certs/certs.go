@@ -89,11 +89,14 @@ func GenerateCertificateTemplate(config *operv1.CertGenConfig) (*x509.Certificat
 		}
 	}
 
-	if len(config.ValidFor.String()) == 0 {
+	if config.ValidFor == time.Duration(0) {
+		fmt.Printf("duration not set\n")
 		notAfter = notBefore.Add(365 * 24 * time.Hour)
 	} else {
+		fmt.Printf("duration set\n")
 		notAfter = notBefore.Add(config.ValidFor)
 	}
+	fmt.Printf("%s\n", notAfter.String())
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
@@ -111,7 +114,7 @@ func GenerateCertificateTemplate(config *operv1.CertGenConfig) (*x509.Certificat
 		NotAfter:  notAfter,
 
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		BasicConstraintsValid: true,
 		IsCA: true,
 	}
