@@ -8,12 +8,14 @@ import (
 
 	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/names"
+	"github.com/nuagenetworks/nuage-network-operator/pkg/network/cni"
 	iputil "github.com/nuagenetworks/nuage-network-operator/pkg/util/ip"
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -48,7 +50,7 @@ func (r *ReconcileNuageCNIConfig) GetK8SClusterNetworkInfo() (*operv1.ClusterNet
 
 	err := r.client.List(context.TODO(), lo, podList)
 	if err != nil {
-		log.Errorf("fetching pod list failed")
+		log.Errorf("fetching pod list failed: %v", err)
 		return nil, err
 	}
 
@@ -184,4 +186,29 @@ func ValidateK8SClusterConfig(c *operv1.ClusterNetworkConfigDefinition) error {
 			c.ClusterNetworkSubnetLength)
 	}
 	return nil
+}
+
+//UpdateClusterNetworkStatus updates config.openshift.io/v1 status object
+func (r *ReconcileNuageCNIConfig) UpdateClusterNetworkStatus(c *operv1.ClusterNetworkConfigDefinition) error {
+	if r.orchestrator == OrchestratorKubernetes {
+		return nil
+	}
+
+	clusterConfig := &configv1.Network{
+		TypeMeta:   metav1.TypeMeta{APIVersion: configv1.GroupVersion.String(), Kind: "Network"},
+		ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
+		Status: configv1.NetworkStatus{
+			ClusterNetwork: []configv1.ClusterNetworkEntry{
+				{
+					CIDR:       c.ClusterNetworkCIDR,
+					HostPrefix: c.ClusterNetworkSubnetLength,
+				},
+			},
+			ServiceNetwork:    []string{c.ServiceNetworkCIDR},
+			NetworkType:       names.NuageSDN,
+			ClusterNetworkMTU: cni.MTU,
+		},
+	}
+
+	return r.ApplyObject(types.NamespacedName{Name: clusterConfig.GetName()}, clusterConfig)
 }

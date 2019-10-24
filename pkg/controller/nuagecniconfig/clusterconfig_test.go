@@ -19,7 +19,50 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestGetK8SClusterNetworkInfo(t *testing.T) {
+func init() {
+	s := scheme.Scheme
+	osv1.Install(s)
+	s.AddKnownTypes(configv1.SchemeGroupVersion, &configv1.Network{})
+}
+
+func TestClusterConfigUpdateStatus(t *testing.T) {
+	g := NewGomegaWithT(t)
+
+	f := &fakeRestClient{
+		client: fake.NewFakeClient(),
+	}
+
+	r := &ReconcileNuageCNIConfig{
+		client:       f,
+		orchestrator: OrchestratorOpenShift,
+	}
+
+	c := &configv1.Network{
+		TypeMeta:   metav1.TypeMeta{APIVersion: configv1.GroupVersion.String(), Kind: "Network"},
+		ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
+		Spec: configv1.NetworkSpec{
+			ClusterNetwork: []configv1.ClusterNetworkEntry{
+				{CIDR: "70.70.0.0/16", HostPrefix: 24},
+			},
+			ServiceNetwork: []string{"192.168.0.0/16"},
+			NetworkType:    names.NuageSDN,
+		},
+	}
+
+	err := r.client.Create(context.TODO(), c)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	d := &operv1.ClusterNetworkConfigDefinition{
+		ClusterNetworkCIDR:         "a",
+		ClusterNetworkSubnetLength: 8,
+		ServiceNetworkCIDR:         "c",
+	}
+
+	err = r.UpdateClusterNetworkStatus(d)
+	g.Expect(err).ToNot(HaveOccurred())
+}
+
+func TestClusterConfigGetK8SNetworkInfo(t *testing.T) {
 	g := NewGomegaWithT(t)
 	f := &fakeRestClient{
 		client: fake.NewFakeClient(),
@@ -74,11 +117,8 @@ func TestGetK8SClusterNetworkInfo(t *testing.T) {
 	g.Expect(err.Error()).To(Equal(apiServerError))
 }
 
-func TestGetClusterConfig(t *testing.T) {
+func TestClusterConfigGet(t *testing.T) {
 	g := NewGomegaWithT(t)
-	s := scheme.Scheme
-	osv1.Install(s)
-	s.AddKnownTypes(configv1.SchemeGroupVersion, &configv1.Network{})
 
 	r := &ReconcileNuageCNIConfig{
 		client: fake.NewFakeClient(),
@@ -112,7 +152,7 @@ func TestGetClusterConfig(t *testing.T) {
 
 }
 
-func TestValidateOSEClusterConfig(t *testing.T) {
+func TestClusterConfigValidateOSE(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	type testvec struct {
@@ -208,7 +248,7 @@ func TestValidateOSEClusterConfig(t *testing.T) {
 
 }
 
-func TestValidateK8SClusterConfig(t *testing.T) {
+func TestClusterConfigValidateK8S(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	type testvec struct {

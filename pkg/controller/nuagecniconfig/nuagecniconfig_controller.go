@@ -146,7 +146,7 @@ type ReconcileNuageCNIConfig struct {
 	apiServerURL               string
 	serviceAccountToken        []byte
 	clusterNetworkSubnetLength uint32
-	clientset                  *kubernetes.Clientset
+	clientset                  kubernetes.Interface
 }
 
 // Reconcile reads that state of the cluster for a NuageCNIConfig object and makes changes based on the state read
@@ -214,6 +214,11 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 			log.Errorf("failed to generate certs %v", err)
 			return reconcile.Result{}, err
 		}
+
+		if err := r.SaveConfigToServer(certConfig, certificates); err != nil {
+			log.Errorf("saving the release config failed %v", err)
+			return reconcile.Result{}, err
+		}
 	} else if err != nil {
 		log.Errorf("getting previous certificates failed %v", err)
 		return reconcile.Result{}, err
@@ -254,6 +259,13 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 		log.Errorf("saving the release config failed %v", err)
 		return reconcile.Result{}, err
 	}
+
+	//update cluster network status for openshift
+	if err := r.UpdateClusterNetworkStatus(clusterInfo); err != nil {
+		log.Errorf("updating cluster network status failed %v", err)
+		return reconcile.Result{}, err
+	}
+
 	return reconcile.Result{}, nil
 }
 

@@ -3,8 +3,8 @@ package nuagecniconfig
 import (
 	"encoding/json"
 
-	"github.com/kubernetes/kubernetes/pkg/kubelet/kubeletconfig/util/log"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/names"
+	log "github.com/sirupsen/logrus"
 	jsonpatch "gopkg.in/evanphx/json-patch.v4"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -58,7 +58,7 @@ func (r *ReconcileNuageCNIConfig) LabelMasterNodes() error {
 
 			_, err = r.clientset.CoreV1().Nodes().Patch(m.Name, types.MergePatchType, patch)
 			if err != nil {
-				log.Errorf("failed to add node selector label to master node %s with error %v", m.Name, err)
+				log.Errorf("failed to add node selector label to %s: %v", m.Name, err)
 			}
 		}
 	}

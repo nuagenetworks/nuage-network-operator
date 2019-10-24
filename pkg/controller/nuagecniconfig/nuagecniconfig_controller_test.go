@@ -18,6 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
+	fakeRest "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -157,8 +158,9 @@ func TestReconcile(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	r := &ReconcileNuageCNIConfig{
-		client:  fake.NewFakeClient(),
-		dclient: &fakeDiscoveryClient{},
+		client:    fake.NewFakeClient(),
+		dclient:   &fakeDiscoveryClient{},
+		clientset: fakeRest.NewSimpleClientset(),
 	}
 
 	// create Network.config.openshift.io
