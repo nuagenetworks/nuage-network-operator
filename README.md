@@ -2,6 +2,12 @@
 
 Nuage CNI operator manages Nuage Monitor, VRS and CNI daemonsets in a Kubernetes/OpenShift cluster. This operator reconciles Nuage CNI config custom resource and creates/updates daemonsets based on the cluster state before reconcile.
 
+### Building the operator
+
+Nuage CNI Operator images can be built using [operator-sdk](https://github.com/operator-framework/operator-sdk)
+
+    operator-sdk build <image name>:<tag>
+
 ### Kuberentes
 
 Following steps can be used to create a Kubernetes cluster with Nuage SDN as networking backend.
