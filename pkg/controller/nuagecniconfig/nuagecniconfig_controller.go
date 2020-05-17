@@ -34,7 +34,7 @@ import (
 
 var (
 	//ManifestPath is the path to templates directory
-	ManifestPath = "./bindata"
+	ManifestPath   = "./bindata"
 	monitDaemonset = types.NamespacedName{
 		Namespace: names.Namespace,
 		Name:      names.NuageMonitor,
@@ -352,7 +352,7 @@ func (r *ReconcileNuageCNIConfig) checkMonitVSDAddressChange(instance *operv1.Nu
 }
 
 func (r *ReconcileNuageCNIConfig) confirmPodsDeletion(CRDName string) error {
-    log.Infof("Waiting for pods related to %s be deleted", CRDName)
+	log.Infof("Waiting for pods related to %s be deleted", CRDName)
 	for {
 		CRDPodsDeleted := true
 		podList, err := r.clientset.CoreV1().Pods(names.Namespace).List(metav1.ListOptions{})

@@ -1,0 +1,26 @@
+- project:
+    templates:
+      - golang-jobs
+    check:
+      jobs:
+        - golang-lint:
+            voting: false
+        - network-operator-build-image
+    gate:
+      jobs:
+        - golang-lint:
+            voting: false
+        - network-operator-build-image
+
+- job:
+    name: network-operator-build-image
+    parent: nuage-build-docker-image
+    nodeset: centos-7
+    vars:
+      vsp_release: "{{ nuage_vsp_release }}"
+      builder: operator
+      container_command: docker
+      zuul_work_dir: "{{ ansible_user_dir }}/src/github.com"
+      operator_images:
+        - context: kubernetes/nuage-network-operator
+          repository: nuage/operator
