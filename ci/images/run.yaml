@@ -1,0 +1,24 @@
+- hosts: all
+  tasks:
+    - name: Ensure Go
+      include_role:
+        name: ensure-go
+
+    - name: Run Go build for all contexts
+      include_role:
+        name: golang-go
+      vars:
+        go_task: "{{ zj_image.go_task }}"
+        go_context: "{{ zj_image.context }}"
+        go_makefile: "{{ zj_image.go_makefile | default('Makefile') }}"
+      loop: "{{ k8s_images }}"
+      loop_control:
+        loop_var: zj_image
+
+    - name: Build images
+      include_role:
+        name: "build-{{ (container_command == 'docker') | ternary('docker', 'container') }}-image"
+      vars:
+        docker_images: "{{ k8s_images }}"
+        container_images: "{{ docker_images }}"
+  environment: "{{ proxy_env | default({}) }}"

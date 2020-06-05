@@ -5,7 +5,9 @@
       jobs:
         - golang-lint:
             voting: false
+        - network-operator-deployment-images
         - network-operator-build-image
+        - network-operator-integration-centos-7
     gate:
       jobs:
         - golang-lint:
@@ -23,4 +25,67 @@
       zuul_work_dir: "{{ ansible_user_dir }}/src/github.com"
       operator_images:
         - context: kubernetes/nuage-network-operator
-          repository: nuage/operator
+          repository: nuage/nuage-network-operator
+
+- job:
+    name: network-operator-deployment-images
+    parent: nuage-build-docker-image
+    nodeset: centos-7
+    required-projects:
+      - gerrit.an.nuagenetworks.net/nuagenetworks/nuage-k8s-infra
+      - gerrit.an.nuagenetworks.net/nuagenetworks/nuage-cni
+      - gerrit.an.nuagenetworks.net/nuagenetworks/nuage-kubernetes
+      - gerrit.an.nuagenetworks.net/nuagenetworks/libvrsdk
+    vars:
+      vsp_release: "{{ nuage_vsp_release }}"
+      container_command: docker
+      zuul_work_dir: "{{ ansible_user_dir }}/src/github.com/"
+      operator_images:
+        - context: kubernetes/nuage-network-operator
+          repository: nuage/nuage-network-operator
+      docker_images:
+        - context: nuagenetworks/nuage-k8s-infra
+          go_task: build
+          repository: nuage/infra
+          build_args:
+            - "http_proxy={{ proxy_env.http_proxy if proxy_env is defined else '' }}"
+            - "https_proxy={{ proxy_env.https_proxy if proxy_env is defined else '' }}"
+        - context: nuagenetworks/nuage-cni/
+          go_task: make
+          repository: nuage/cni
+          build_args:
+            - "http_proxy={{ proxy_env.http_proxy if proxy_env is defined else '' }}"
+            - "https_proxy={{ proxy_env.https_proxy if proxy_env is defined else '' }}"
+        - context: nuagenetworks/nuage-kubernetes/nuagekubemon
+          go_task: make
+          go_makefile: scripts/Makefile
+          repository: nuage/kubemon
+
+- job:
+    name: network-operator-integration-centos-7
+    parent: deployment-kubernetes-centos-7
+    dependencies: network-operator-deployment-images
+    description: |
+      Nuage k8s integration job
+    required-projects:
+      - gerrit.an.nuagenetworks.net/kubernetes/nuage-container-tests
+      - gerrit.an.nuagenetworks.net/nuagenetworks/nuage-k8s-infra
+      - gerrit.an.nuagenetworks.net/nuagenetworks/nuage-cni
+      - gerrit.an.nuagenetworks.net/nuagenetworks/libvrsdk
+    vars:
+      cgroupdriver: systemd
+      zuul_copy_output:
+        '{{ zuul.project.src_dir }}/kube-nuage.yaml': logs
+        '{{ zuul.project.src_dir }}/operator-nuageconfig.yaml': logs
+        '/var/log/cni': logs
+        '/var/log/nuage-openshift-monitor': logs
+      kubernetes_pod_network:
+        cni: nuage
+        cidr: '192.168.0.0/16'
+      vsd_user:
+        username: k8s-admin
+        password: k8s-admin
+        groups:
+          - 'Administrators'
+          - 'Admin Operators'
+      default_domain: "ci-{{ zuul.build }}"
