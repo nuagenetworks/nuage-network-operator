@@ -20,7 +20,7 @@ data:
       # URL of the VSD Architect
       vsdApiUrl: https://{{.MonitorConfig.VSDAddress}}:{{.MonitorConfig.VSDPort}}
       # API version to query against
-      vspVersion: v5_0
+      vspVersion: v6
       # Name of the enterprise in which pods will reside
       enterpriseName: {{.MonitorConfig.VSDMetadata.Enterprise}}
       # Name of the domain in which pods will reside

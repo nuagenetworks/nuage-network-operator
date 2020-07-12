@@ -1,0 +1,59 @@
+# This manifest installs Nuage Infra pod on
+# each node in a Kubernetes cluster.
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: nuage-infra
+  namespace: nuage-network-operator
+  labels:
+    k8s-app: nuage-infra
+spec:
+  selector:
+    matchLabels:
+      k8s-app: nuage-infra
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        k8s-app: nuage-infra
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+          operator: Exists
+      containers:
+        # This container spawns a Nuage Infra pod
+        # on each worker node
+        - name: install-nuage-infra-test
+          image: "{{.ReleaseConfig.InfraTag}}"
+          command: ["/usr/bin/nuage-k8s-infra-pod.sh"]
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /var/log
+              name: log-dir
+            - mountPath: /var/run
+              name: openvswitch-dir
+          env:
+            - name: VSP_ENTERPRISE
+              value: "{{.MonitorConfig.VSDMetadata.Enterprise}}"
+            - name: VSP_DOMAIN
+              value: "{{.MonitorConfig.VSDMetadata.Domain}}"
+            - name: VSP_USER
+              value: "{{.MonitorConfig.VSDMetadata.User}}"
+            - name: POD_NETWORK_CIDR
+              value: "{{.ClusterNetworkConfig.ClusterNetworkCIDR}}"
+            - name: PERSONALITY
+              value: vrs
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/usr/bin/nuage-k8s-infra-pod.sh", "-c"]
+      volumes:
+        - name: log-dir
+          hostPath:
+            path: /var/log
+        - name: openvswitch-dir
+          hostPath:
+            path: /var/run

@@ -12,7 +12,6 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/api/network"
 	osv1 "github.com/openshift/api/route/v1"
-	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,8 +20,11 @@ import (
 	fakeRest "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
+
+var testlog = logf.Log.WithName("cluster_config_test")
 
 var nu *operv1.NuageCNIConfig
 
@@ -41,7 +43,10 @@ func (d *fakeDiscoveryClient) ServerGroups() (apiGroupList *metav1.APIGroupList,
 
 func createNetworkConfig(g *GomegaWithT, r *ReconcileNuageCNIConfig) {
 	scheme1 := scheme.Scheme
-	osv1.Install(scheme1)
+	err := osv1.Install(scheme1)
+	if err != nil {
+		testlog.Error(err, "Failed to install scheme")
+	}
 	scheme1.AddKnownTypes(configv1.SchemeGroupVersion, &configv1.Network{})
 	c := &configv1.Network{
 		TypeMeta:   metav1.TypeMeta{APIVersion: configv1.GroupVersion.String(), Kind: "Network"},
@@ -55,13 +60,16 @@ func createNetworkConfig(g *GomegaWithT, r *ReconcileNuageCNIConfig) {
 		},
 	}
 
-	err := r.client.Create(context.TODO(), c)
+	err = r.client.Create(context.TODO(), c)
 	g.Expect(err).ToNot(HaveOccurred())
 }
 
 func createNetworkOperatorConfig(g *GomegaWithT, r *ReconcileNuageCNIConfig) {
 	scheme2 := scheme.Scheme
-	osv1.Install(scheme2)
+	err := osv1.Install(scheme2)
+	if err != nil {
+		testlog.Error(err, "Failed to install scheme")
+	}
 	scheme2.AddKnownTypes(operv1.SchemeGroupVersion, &operv1.NuageCNIConfig{})
 
 	nu = &operv1.NuageCNIConfig{
@@ -95,10 +103,11 @@ func createNetworkOperatorConfig(g *GomegaWithT, r *ReconcileNuageCNIConfig) {
 				VRSTag:     "0.0.0",
 				CNITag:     "0.0.0",
 				MonitorTag: "0.0.0",
+				InfraTag:   "0.0.0",
 			},
 		},
 	}
-	err := r.client.Create(context.TODO(), nu)
+	err = r.client.Create(context.TODO(), nu)
 	g.Expect(err).ToNot(HaveOccurred())
 }
 
@@ -142,7 +151,7 @@ func TestGetOrchestratorType(t *testing.T) {
 	dcl.ServerGroupsFunc = func() (*metav1.APIGroupList, error) {
 		return &metav1.APIGroupList{
 			Groups: []metav1.APIGroup{
-				metav1.APIGroup{
+				{
 					Name: network.GroupName,
 				},
 			},
@@ -174,7 +183,7 @@ func TestReconcile(t *testing.T) {
 
 	ManifestPath = "../../../bindata"
 
-	res, err := r.Reconcile(reconcile.Request{types.NamespacedName{Name: "nuage-network"}})
+	res, err := r.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: "nuage-network"}})
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(res).ToNot(BeNil())
 
@@ -209,46 +218,14 @@ func TestReconcile(t *testing.T) {
 	g.Expect(rc.GetName()).To(Equal(names.NuageReleaseConfig))
 
 	//This reconcile should be a no op
-	res, err = r.Reconcile(reconcile.Request{types.NamespacedName{Name: "nuage-network"}})
+	res, err = r.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: "nuage-network"}})
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(res).ToNot(BeNil())
 
 	//if we updated cni tag. so the reconile would redeploy the daemonsets
 	updateCNITag(g, r)
-	res, err = r.Reconcile(reconcile.Request{types.NamespacedName{Name: "nuage-network"}})
+	res, err = r.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: "nuage-network"}})
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(res).ToNot(BeNil())
 
-}
-
-func TestBuildApiServerURL(t *testing.T) {
-	g := NewGomegaWithT(t)
-
-	type testvec struct {
-		url  string
-		port string
-		out  string
-		err  error
-	}
-
-	vec := []testvec{
-		testvec{"a", "b", "https://a:b", nil},
-		testvec{"", "b", "", errors.Errorf("service host nor service port")},
-		testvec{"", "", "", errors.Errorf("service host nor service port")},
-	}
-
-	var out string
-	for _, tt := range vec {
-		err := os.Setenv("KUBERNETES_SERVICE_HOST", tt.url)
-		g.Expect(err).ToNot(HaveOccurred())
-		err = os.Setenv("KUBERNETES_SERVICE_PORT", tt.port)
-		g.Expect(err).ToNot(HaveOccurred())
-		out, err = buildAPIServerURL()
-		if tt.err == nil {
-			g.Expect(err).ToNot(HaveOccurred())
-		} else {
-			g.Expect(err.Error()).To(ContainSubstring(tt.err.Error()))
-		}
-		g.Expect(out).To(Equal(tt.out))
-	}
 }

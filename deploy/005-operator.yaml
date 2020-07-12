@@ -22,7 +22,7 @@ spec:
       containers:
         - name: nuage-network-operator
           # Replace this with the built image name
-          image: 135.115.177.175:5000/nuage/operator:beta13
+          image: registry.philippe.plm.nuagedemo.net/nuage/nuage-network-operator:latest
           command:
           - nuage-network-operator
           imagePullPolicy: Always

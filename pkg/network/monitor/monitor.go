@@ -5,11 +5,9 @@ import (
 
 	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/names"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 var (
-	log = logf.Log.WithName("monitor_config")
 	//DefaultResourceName is the default resource name for all resources involved in RBAC
 	DefaultResourceName = "nuage-monitor"
 	//DefaultRestServerAddress is the default rest server address

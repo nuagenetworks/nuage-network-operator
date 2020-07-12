@@ -139,6 +139,8 @@ spec:
               properties:
                 podNetwork:
                   type: string
+                ClusterServiceNetworkCIDR:
+                  type: string
                 subnetLength:
                   format: int32
                   type: integer
@@ -152,6 +154,9 @@ spec:
                   minLength: 1
                   type: string
                 monitorTag:
+                  minLength: 1
+                  type: string
+                infraTag:
                   minLength: 1
                   type: string
                 registry:
@@ -178,6 +183,7 @@ spec:
               - vrsTag
               - cniTag
               - monitorTag
+              - infraTag
               type: object
             vrsConfig:
               properties:

@@ -18,6 +18,8 @@ type ReleaseConfigDefinition struct {
 	CNITag string `json:"cniTag"`
 	// +kubebuilder:validation:MinLength=1
 	MonitorTag string `json:"monitorTag"`
+	// +kubebuilder:validation:MinLength=1
+	InfraTag string `json:"infraTag"`
 }
 
 // MonitorConfigDefinition holds user specified config for monitor
@@ -34,6 +36,15 @@ type MonitorConfigDefinition struct {
 	ClusterRoleName        string   `json:"ClusterRoleName,omitempty"`
 	ClusterRoleBindingName string   `json:"ClusterRoleBindingName,omitempty"`
 	MasterNodeSelector     string   `json:"MasterNodeSelector,omitempty"`
+}
+
+// InfraPodConfigDefenition holds user specified config for InfraPodConfigDefenition
+type InfraPodConfigDefenition struct {
+	VSPEnterprise  string `json:"enterprise"`
+	VSPDomain      string `json:"domain"`
+	VSPUser        string `json:"user"`
+	VSPPodCIDR     string `json:"podNetwork"`
+	VRSPersonality string `json:"personality,omitempty"`
 }
 
 // VRSConfigDefinition holds user specified config for VRS
@@ -101,8 +112,9 @@ type RegistryConfig struct {
 // PodNetworkConfigDefinition hold the pod network
 // to be only used for k8s
 type PodNetworkConfigDefinition struct {
-	ClusterNetworkCIDR string `json:"podNetwork"`
-	SubnetLength       uint32 `json:"subnetLength"`
+	ClusterNetworkCIDR        string `json:"podNetwork"`
+	SubnetLength              uint32 `json:"subnetLength"`
+	ClusterServiceNetworkCIDR string `json:"ClusterServiceNetworkCIDR"`
 }
 
 // NuageCNIConfigSpec defines the desired state of NuageCNIConfig

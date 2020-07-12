@@ -5,10 +5,7 @@ import (
 	"net"
 
 	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
-
-var log = logf.Log.WithName("vrs_config")
 
 const (
 	//VRSPlatform defines the VRS platform

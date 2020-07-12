@@ -13,4 +13,6 @@ const (
 	ServiceAccountName = "nuage-network-operator"
 	// MasterNodeSelector label to be used for selecting master nodes
 	MasterNodeSelector = "nuage.io/monitor-pod"
+	NuageMonitorConfig = "nuage-monitor-config-data"
+	NuageMonitor       = "nuage-monitor"
 )

@@ -2,9 +2,7 @@ package nuagecniconfig
 
 import (
 	"context"
-	"fmt"
 	"net"
-	"strings"
 
 	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/names"
@@ -13,11 +11,9 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -42,35 +38,10 @@ func (r *ReconcileNuageCNIConfig) GetK8SClusterNetworkInfo() (*operv1.ClusterNet
 	c := &operv1.ClusterNetworkConfigDefinition{
 		ClusterNetworkCIDR:         r.clusterNetworkCIDR,
 		ClusterNetworkSubnetLength: r.clusterNetworkSubnetLength,
+		ServiceNetworkCIDR:         r.ClusterServiceNetworkCIDR,
 	}
 
-	podList := &corev1.PodList{}
-	lo := &client.ListOptions{Namespace: "kube-system"}
-	lo.SetLabelSelector("component==kube-apiserver")
-
-	err := r.client.List(context.TODO(), lo, podList)
-	if err != nil {
-		log.Errorf("fetching pod list failed: %v", err)
-		return nil, err
-	}
-
-	if len(podList.Items) == 0 {
-		return nil, fmt.Errorf("api server pod could not be listed")
-	}
-
-	command := podList.Items[0].Spec.Containers[0].Command
-	for _, arg := range command {
-		if strings.Contains(arg, "service-cluster-ip-range") {
-			kvs := strings.Split(arg, "=")
-			if len(kvs) < 2 {
-				c.ServiceNetworkCIDR = DefaultServiceNetworkCIDR
-				break
-			}
-			c.ServiceNetworkCIDR = strings.Trim(kvs[1], `'"`)
-		}
-	}
-
-	if len(c.ServiceNetworkCIDR) == 0 {
+	if len(r.ClusterServiceNetworkCIDR) == 0 {
 		c.ServiceNetworkCIDR = DefaultServiceNetworkCIDR
 	}
 

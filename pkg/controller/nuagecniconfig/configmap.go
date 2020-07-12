@@ -16,6 +16,11 @@ var certConfig = types.NamespacedName{
 	Name:      names.NuageCertConfig,
 }
 
+var monitConfig = types.NamespacedName{
+	Namespace: names.Namespace,
+	Name:      names.NuageMonitorConfig,
+}
+
 var releaseConfig = types.NamespacedName{
 	Namespace: names.Namespace,
 	Name:      names.NuageReleaseConfig,

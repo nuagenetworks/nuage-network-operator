@@ -3,8 +3,8 @@ package nuagecniconfig
 import (
 	"context"
 	"fmt"
-	"os"
-	"reflect"
+	"regexp"
+	"strings"
 
 	operv1 "github.com/nuagenetworks/nuage-network-operator/pkg/apis/operator/v1alpha1"
 	"github.com/nuagenetworks/nuage-network-operator/pkg/certs"
@@ -17,6 +17,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -33,7 +35,13 @@ import (
 var (
 	//ManifestPath is the path to templates directory
 	ManifestPath = "./bindata"
+	monitDaemonset = types.NamespacedName{
+		Namespace: names.Namespace,
+		Name:      names.NuageMonitor,
+	}
 )
+
+const nuageFinalizer = "finalizer.operator.nuage.io"
 
 /**
 * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
@@ -77,17 +85,13 @@ func newReconciler(mgr manager.Manager) (reconcile.Reconciler, error) {
 		return &ReconcileNuageCNIConfig{}, err
 	}
 
-	r.serviceAccountToken, err = r.createServiceAccountToken()
+	r.serviceAccountToken, err = r.getServiceAccountToken()
 	if err != nil {
 		log.Errorf("creating service account token failed %v", err)
 		return &ReconcileNuageCNIConfig{}, err
 	}
 
-	r.apiServerURL, err = buildAPIServerURL()
-	if err != nil {
-		log.Errorf("failed to get api server url %v", err)
-		return &ReconcileNuageCNIConfig{}, err
-	}
+	r.apiServerURL = mgr.GetConfig().Host
 
 	return r, nil
 }
@@ -147,6 +151,7 @@ type ReconcileNuageCNIConfig struct {
 	serviceAccountToken        []byte
 	clusterNetworkSubnetLength uint32
 	clientset                  kubernetes.Interface
+	ClusterServiceNetworkCIDR  string
 }
 
 // Reconcile reads that state of the cluster for a NuageCNIConfig object and makes changes based on the state read
@@ -167,7 +172,6 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 		}
 		return reconcile.Result{}, err
 	}
-
 	if err := r.parse(instance); err != nil {
 		log.Errorf("failed to parse crd config %v", err)
 		return reconcile.Result{}, nil
@@ -177,8 +181,7 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 		r.setPodNetworkConfig(&instance.Spec.PodNetworkConfig)
 	}
 
-	clusterInfo := &operv1.ClusterNetworkConfigDefinition{}
-	clusterInfo, err = r.GetClusterNetworkInfo()
+	clusterInfo, err := r.GetClusterNetworkInfo()
 	if err != nil {
 		log.Errorf("failed to get cluster network config %v", err)
 		return reconcile.Result{}, err
@@ -187,22 +190,6 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 	if clusterInfo == nil {
 		log.Infof("could not populate network config")
 		return reconcile.Result{}, nil
-	}
-
-	//TODO: Get the previous config
-	rc := &operv1.ReleaseConfigDefinition{}
-	if err := r.GetConfigFromServer(releaseConfig, rc); err == nil && len(rc.VRSTag) == 0 {
-		log.Infof("no previous config found. creating objects first time")
-	} else {
-		if err != nil {
-			log.Errorf("getting release config failed %v", err)
-			return reconcile.Result{}, err
-		}
-
-		if reflect.DeepEqual(rc, &instance.Spec.ReleaseConfig) {
-			log.Warnf("no config differences found. skipping reconcile")
-			return reconcile.Result{}, nil
-		}
 	}
 
 	certificates := &operv1.TLSCertificates{}
@@ -226,18 +213,54 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 
 	//Render the templates and get the objects
 	renderData := render.MakeRenderData(&operv1.RenderConfig{
-		instance.Spec,
-		r.apiServerURL,
-		string(r.serviceAccountToken),
-		certificates,
-		clusterInfo,
+		NuageCNIConfigSpec:   instance.Spec,
+		K8SAPIServerURL:      r.apiServerURL,
+		ServiceAccountToken:  string(r.serviceAccountToken),
+		Certificates:         certificates,
+		ClusterNetworkConfig: clusterInfo,
 	})
 
 	var objs []*unstructured.Unstructured
 	if objs, err = render.RenderDir(ManifestPath, &renderData); err != nil {
 		//TODO: update operator status
-		log.Errorf("failed to render templates %v", err)
+		log.Errorf("Failed to render templates %v", err)
 		return reconcile.Result{}, err
+	}
+
+	if instance.GetDeletionTimestamp() != nil {
+		// Run finalization logic for nuageFinalizer. If the
+		// finalization logic fails, don't remove the finalizer so
+		// that we can retry during the next reconciliation.
+		nuage_crd_names := []string{"nuage-infra", "nuage-monitor", "nuage-cni", "nuage-vrs"}
+		for _, nuage_crd_name := range nuage_crd_names {
+			err = r.deleteNuageResourceByName(objs, nuage_crd_name)
+			if err != nil {
+				return reconcile.Result{}, err
+			} else {
+				log.Infof("Deleted %s CRD objects", nuage_crd_name)
+			}
+			if nuage_crd_name == "nuage-infra" {
+				err = r.confirmPodsDeletion(nuage_crd_name)
+				if err != nil {
+					return reconcile.Result{}, err
+				}
+			}
+		}
+
+		// Remove nuageFinalizer.
+		instance.SetFinalizers(nil)
+
+		// Update CR
+		err = r.client.Update(context.TODO(), instance)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{}, nil
+	}
+
+	monitVSDAddressChange, err := r.checkMonitVSDAddressChange(instance)
+	if err != nil {
+		return reconcile.Result{}, nil
 	}
 
 	//Create or update the objects against API server
@@ -246,8 +269,10 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 			Name:      obj.GetName(),
 			Namespace: obj.GetNamespace(),
 		}, obj); err != nil {
-			log.Errorf("failed creating object, name %s namespace %s type %s %v", obj.GetName(), obj.GetNamespace(), obj.GroupVersionKind(), err)
+			log.Errorf("failed creating object, name %s in namespace %s type %s %v", obj.GetName(), obj.GetNamespace(), obj.GroupVersionKind(), err)
 			log.Errorf("object is %v", obj)
+		} else {
+			log.Infof("Processed config for object %s in namespace %s type %s", obj.GetName(), obj.GetNamespace(), obj.GroupVersionKind())
 		}
 	}
 
@@ -256,7 +281,7 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 	}
 
 	if err := r.SaveConfigToServer(releaseConfig, &instance.Spec.ReleaseConfig); err != nil {
-		log.Errorf("saving the release config failed %v", err)
+		log.Errorf("Saving the release config failed %v", err)
 		return reconcile.Result{}, err
 	}
 
@@ -266,27 +291,113 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 		return reconcile.Result{}, err
 	}
 
+	if monitVSDAddressChange {
+		if err = r.UpdateDaemonsetpods(monitDaemonset); err != nil {
+			log.Errorf("Updating daemonset pods failed %v", err)
+			return reconcile.Result{}, err
+		}
+	}
+
+	// Add finalizer for this CR
+	if err := r.addFinalizer(instance); err != nil {
+		return reconcile.Result{}, err
+	}
 	return reconcile.Result{}, nil
 }
 
-func buildAPIServerURL() (string, error) {
-	host, port := os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT")
-	if len(host) == 0 || len(port) == 0 {
-		return "", fmt.Errorf("neither kubernetes service host nor service port can be empty")
+func (r *ReconcileNuageCNIConfig) deleteNuageResourceByName(objs []*unstructured.Unstructured, objName string) error {
+	//delete nuage infra objects and pods against API server
+	for _, obj := range objs {
+		if obj.GetName() == objName {
+			if err := r.DeleteResource(types.NamespacedName{
+				Name:      obj.GetName(),
+				Namespace: obj.GetNamespace(),
+			}, obj); err != nil {
+				log.Errorf("Failed deleting resource, name %s namespace %s type %s %v", obj.GetName(), obj.GetNamespace(), obj.GroupVersionKind(), err)
+				log.Errorf("Object is %v", obj)
+				return err
+			}
+			log.Infof("Deleted pod resources successfully for %s", objName)
+		}
 	}
+	return nil
+}
 
-	return "https://" + host + ":" + port, nil
+func (r *ReconcileNuageCNIConfig) checkMonitVSDAddressChange(instance *operv1.NuageCNIConfig) (bool, error) {
+	monitConfigMap, err := r.GetConfigMap(monitConfig)
+	if err == nil {
+		for _, monitConfigData := range monitConfigMap.Data {
+			for _, lineData := range strings.Split(monitConfigData, "\n") {
+				re, err := regexp.Compile(`vsdApiUrl`)
+				match := re.FindStringIndex(lineData)
+				if match != nil {
+					currentAddress := strings.Split(lineData, "//")[len(strings.Split(lineData, "//"))-1]
+					newAddress := fmt.Sprintf("%s:%d", instance.Spec.MonitorConfig.VSDAddress, instance.Spec.MonitorConfig.VSDPort)
+					if currentAddress != newAddress {
+						log.Infof("Current VSDAddress %s to be updated to %s", currentAddress, newAddress)
+						return true, nil
+					}
+				} else if err != nil {
+					log.Errorf("Error finding VSDURL in configMap %v", err)
+				}
+			}
+		}
+	} else if apierrors.IsNotFound(err) {
+		log.Infof("No previous monitor configMap found, a new configmap will be created")
+	} else {
+		log.Errorf("Error getting monit configMap %v", err)
+		return false, err
+	}
+	return false, nil
+}
+
+func (r *ReconcileNuageCNIConfig) confirmPodsDeletion(CRDName string) error {
+    log.Infof("Waiting for pods related to %s be deleted", CRDName)
+	for {
+		CRDPodsDeleted := true
+		podList, err := r.clientset.CoreV1().Pods(names.Namespace).List(metav1.ListOptions{})
+		if err != nil {
+			log.Errorf("Cannot retrieve pods from namespace %s: %s", names.Namespace, err)
+			return err
+		}
+		for _, pod := range podList.Items {
+			if pod.ObjectMeta.GenerateName == CRDName+"-" {
+				CRDPodsDeleted = false
+				break
+			}
+		}
+		if CRDPodsDeleted {
+			break
+		} else {
+			continue
+		}
+	}
+	return nil
+}
+
+func (r *ReconcileNuageCNIConfig) addFinalizer(nuageOperator *operv1.NuageCNIConfig) error {
+	if len(nuageOperator.GetFinalizers()) < 1 && nuageOperator.GetDeletionTimestamp() == nil {
+		log.Infof("Adding Finalizer for the Nuage")
+		nuageOperator.SetFinalizers([]string{nuageFinalizer})
+		// Update CustomResource
+		err := r.client.Update(context.TODO(), nuageOperator)
+		if err != nil {
+			log.Errorf("Failed to update NuageOperator with finalizer, %v", err)
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *ReconcileNuageCNIConfig) getOrchestratorType() (OrchestratorType, error) {
 
 	if r.dclient == nil {
-		return OrchestratorNone, fmt.Errorf("discovery client not initialized. platform cannot be determined")
+		return OrchestratorNone, fmt.Errorf("Discovery client not initialized. platform cannot be determined")
 	}
 
 	apis, err := r.dclient.ServerGroups()
 	if err != nil {
-		return OrchestratorNone, fmt.Errorf("couldn't fetch api groups from api server")
+		return OrchestratorNone, fmt.Errorf("Couldn't fetch api groups from api server")
 	}
 
 	for _, group := range apis.Groups {
@@ -294,56 +405,49 @@ func (r *ReconcileNuageCNIConfig) getOrchestratorType() (OrchestratorType, error
 			return OrchestratorOpenShift, nil
 		}
 	}
-
 	return OrchestratorKubernetes, nil
 }
 
 func (r *ReconcileNuageCNIConfig) parse(instance *operv1.NuageCNIConfig) error {
 	if err := monitor.Parse(&instance.Spec.MonitorConfig); err != nil {
 		//invalid config passed.
-		// TODO: update the operator status to the same and dont requeue
-		log.Errorf("failed to parse monitor config %v", err)
+		// TODO: update the operator status to the same and don't requeue
+		log.Errorf("Failed to parse monitor config %v", err)
 		return err
 	}
 
 	if err := cni.Parse(&instance.Spec.CNIConfig); err != nil {
 		//invalid config passed.
-		//TODO: update the operator status to the same and dont requeue
-		log.Errorf("failed to parse cni config %v", err)
+		//TODO: update the operator status to the same and don't requeue
+		log.Errorf("Failed to parse cni config %v", err)
 		return err
 	}
 
 	if err := vrs.Parse(&instance.Spec.VRSConfig); err != nil {
 		//invalid config passed.
-		//TODO: update the operator status to the same and dont requeue
-		log.Errorf("failed to parse vrs config %v", err)
+		//TODO: update the operator status to the same and don't requeue
+		log.Errorf("Failed to parse vrs config %v", err)
 		return err
 	}
-
 	return nil
 }
 
 func (r *ReconcileNuageCNIConfig) setPodNetworkConfig(p *operv1.PodNetworkConfigDefinition) {
 	r.clusterNetworkCIDR = p.ClusterNetworkCIDR
 	r.clusterNetworkSubnetLength = p.SubnetLength
+	r.ClusterServiceNetworkCIDR = p.ClusterServiceNetworkCIDR
 }
 
-func (r *ReconcileNuageCNIConfig) createServiceAccountToken() ([]byte, error) {
-	//	err := r.CreateServiceAccount(names.ServiceAccountName, names.Namespace)
-	//	if err != nil {
-	//		log.Errorf("failed to create service account %v", err)
-	//		return []byte{}, err
-	//	}
-
+func (r *ReconcileNuageCNIConfig) getServiceAccountToken() ([]byte, error) {
 	secret, err := r.GetSecret(names.ServiceAccountName, names.Namespace)
 	if err != nil {
-		log.Errorf("failed to get secret for sa %s in ns %s", names.ServiceAccountName, names.Namespace)
+		log.Errorf("Failed to get secret for sa %s in ns %s", names.ServiceAccountName, names.Namespace)
 		return []byte{}, err
 	}
 
 	token, err := r.ExtractSecretToken(secret)
 	if err != nil {
-		log.Errorf("token extraction failed %v", err)
+		log.Errorf("Token extraction failed %v", err)
 		return []byte{}, err
 	}
 

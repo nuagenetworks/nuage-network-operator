@@ -16,7 +16,7 @@ var exp []*corev1.Node
 func initData(t *testing.T) {
 	g = NewGomegaWithT(t)
 	exp = []*corev1.Node{
-		&corev1.Node{
+		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "node1",
 				Labels: map[string]string{
@@ -24,7 +24,7 @@ func initData(t *testing.T) {
 				},
 			},
 		},
-		&corev1.Node{ObjectMeta: metav1.ObjectMeta{Name: "node2"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "node2"}},
 	}
 
 	clientset := fake.NewSimpleClientset(exp[0], exp[1])

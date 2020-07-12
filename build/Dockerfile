@@ -1,4 +1,4 @@
-FROM centos:7
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
 ENV OPERATOR=/usr/local/bin/nuage-network-operator \
     USER_UID=1001 \

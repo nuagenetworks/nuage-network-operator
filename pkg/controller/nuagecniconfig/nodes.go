@@ -11,12 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-type patchMapStruct struct {
-	Op    string            `json:"op"`
-	Path  string            `json:"path"`
-	Value map[string]string `json:"value"`
-}
-
 //ListNodes fetches the list of nodes from api server that matches listOptions
 func (r *ReconcileNuageCNIConfig) ListNodes(listOptions metav1.ListOptions) ([]corev1.Node, error) {
 
