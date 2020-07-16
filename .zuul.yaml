@@ -3,16 +3,20 @@
       - golang-jobs
     check:
       jobs:
-        - golang-lint:
-            voting: false
+        - golang-lint
         - network-operator-deployment-images
-        - network-operator-build-image
+        - network-operator-deployment-images
         - network-operator-integration-centos-7
     gate:
       jobs:
-        - golang-lint:
-            voting: false
+        - golang-lint
         - network-operator-build-image
+        - network-operator-deployment-images
+        - network-operator-integration-centos-7
+    periodic:
+      jobs:
+        - network-operator-deployment-images
+        - network-operator-integration-centos-7
 
 - job:
     name: network-operator-build-image
@@ -32,6 +36,7 @@
     parent: nuage-build-docker-image
     nodeset: centos-7
     required-projects:
+      - gerrit.an.nuagenetworks.net/kubernetes/nuage-network-operator
       - gerrit.an.nuagenetworks.net/nuagenetworks/nuage-k8s-infra
       - gerrit.an.nuagenetworks.net/nuagenetworks/nuage-cni
       - gerrit.an.nuagenetworks.net/nuagenetworks/nuage-kubernetes
