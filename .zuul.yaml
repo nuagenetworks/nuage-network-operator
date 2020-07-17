@@ -64,7 +64,7 @@
         - context: nuagenetworks/nuage-kubernetes/nuagekubemon
           go_task: make
           go_makefile: scripts/Makefile
-          repository: nuage/kubemon
+          repository: nuage/monitor
 
 - job:
     name: network-operator-integration-centos-7
