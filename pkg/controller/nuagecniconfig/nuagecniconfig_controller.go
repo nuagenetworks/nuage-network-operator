@@ -194,7 +194,7 @@ func (r *ReconcileNuageCNIConfig) Reconcile(request reconcile.Request) (reconcil
 
 	certificates := &operv1.TLSCertificates{}
 	if err := r.GetConfigFromServer(certConfig, certificates); err == nil && certificates.CA == nil {
-		log.Infof("no previous certificates found. creating certs first time")
+		log.Infof("No previous certificates found. creating certs first time")
 
 		certificates, err = certs.GenerateCertificates(&operv1.CertGenConfig{})
 		if err != nil {

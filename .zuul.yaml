@@ -23,7 +23,7 @@
     parent: nuage-build-docker-image
     nodeset: centos-7
     vars:
-      vsp_release: "{{ nuage_vsp_release }}"
+      vsp_release: "6.0"
       builder: operator
       container_command: docker
       zuul_work_dir: "{{ ansible_user_dir }}/src/github.com"
@@ -42,7 +42,7 @@
       - gerrit.an.nuagenetworks.net/nuagenetworks/nuage-kubernetes
       - gerrit.an.nuagenetworks.net/nuagenetworks/libvrsdk
     vars:
-      vsp_release: "{{ nuage_vsp_release }}"
+      vsp_release: "6.0"
       container_command: docker
       zuul_work_dir: "{{ ansible_user_dir }}/src/github.com/"
       operator_images:
@@ -78,6 +78,7 @@
       - gerrit.an.nuagenetworks.net/nuagenetworks/nuage-cni
       - gerrit.an.nuagenetworks.net/nuagenetworks/libvrsdk
     vars:
+      vsp_release: "6.0"
       cgroupdriver: systemd
       zuul_copy_output:
         '{{ zuul.project.src_dir }}/kube-nuage.yaml': logs
