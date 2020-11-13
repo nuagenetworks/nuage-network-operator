@@ -1,0 +1,26 @@
+# Copyright 2020 Nokia
+# Licensed under the Apache License 2.0.
+# SPDX-License-Identifier: Apache-2.0
+
+
+
+# permissions for end users to view nuagecniconfigs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nuagecniconfig-viewer-role
+rules:
+- apiGroups:
+  - operator.nuage.io
+  resources:
+  - nuagecniconfigs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - operator.nuage.io
+  resources:
+  - nuagecniconfigs/status
+  verbs:
+  - get

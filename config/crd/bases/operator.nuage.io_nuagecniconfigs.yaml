@@ -1,0 +1,234 @@
+# Copyright 2020 Nokia
+# Licensed under the Apache License 2.0.
+# SPDX-License-Identifier: Apache-2.0
+
+
+
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: nuagecniconfigs.operator.nuage.io
+spec:
+  group: operator.nuage.io
+  names:
+    kind: NuageCNIConfig
+    listKind: NuageCNIConfigList
+    plural: nuagecniconfigs
+    singular: nuagecniconfig
+  scope: Cluster
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: NuageCNIConfig is the Schema for the networks API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NuageCNIConfigSpec defines the desired state of NuageCNIConfig
+            properties:
+              cniConfig:
+                description: CNIConfigDefinition holds user specified config for CNI
+                properties:
+                  clusterRoleBindingName:
+                    type: string
+                  clusterRoleName:
+                    type: string
+                  cniVersion:
+                    type: string
+                  kubeConfig:
+                    type: string
+                  loadBalancerURL:
+                    minLength: 1
+                    type: string
+                  logFileSize:
+                    type: integer
+                  logLevel:
+                    type: string
+                  monitorInterval:
+                    type: integer
+                  mtu:
+                    type: integer
+                  nuageSiteID:
+                    type: integer
+                  portResolveTimer:
+                    type: integer
+                  serviceAccountName:
+                    type: string
+                  staleEntryTimeout:
+                    type: integer
+                  vrsBridge:
+                    type: string
+                  vrsConnectionCheckTimer:
+                    type: integer
+                  vrsEndpoint:
+                    type: string
+                required:
+                - loadBalancerURL
+                type: object
+              monitorConfig:
+                description: MonitorConfigDefinition holds user specified config for
+                  monitor
+                properties:
+                  ClusterRoleBindingName:
+                    type: string
+                  ClusterRoleName:
+                    type: string
+                  MasterNodeSelector:
+                    type: string
+                  ServiceAccountName:
+                    type: string
+                  restServerAddress:
+                    type: string
+                  restServerPort:
+                    type: integer
+                  vsdAddress:
+                    minLength: 1
+                    type: string
+                  vsdFlags:
+                    description: Flags hold the flags for VSD behaviors
+                    properties:
+                      autoScaleSubnets:
+                        type: boolean
+                      encryptionEnabled:
+                        type: boolean
+                      statsEnabled:
+                        type: boolean
+                      underlayEnabled:
+                        type: boolean
+                    type: object
+                  vsdMetadata:
+                    description: Metadata holds the VSD metadata info
+                    properties:
+                      domain:
+                        minLength: 1
+                        type: string
+                      enterprise:
+                        minLength: 1
+                        type: string
+                      user:
+                        minLength: 1
+                        type: string
+                      userCert:
+                        minLength: 1
+                        type: string
+                      userKey:
+                        minLength: 1
+                        type: string
+                    required:
+                    - domain
+                    - enterprise
+                    - user
+                    - userCert
+                    - userKey
+                    type: object
+                  vsdPort:
+                    minimum: 0
+                    type: integer
+                required:
+                - vsdAddress
+                - vsdFlags
+                - vsdMetadata
+                - vsdPort
+                type: object
+              podNetworkConfig:
+                description: PodNetworkConfigDefinition hold the pod network to be
+                  only used for k8s
+                properties:
+                  ClusterServiceNetworkCIDR:
+                    type: string
+                  podNetwork:
+                    type: string
+                  subnetLength:
+                    format: int32
+                    type: integer
+                required:
+                - ClusterServiceNetworkCIDR
+                - podNetwork
+                - subnetLength
+                type: object
+              releaseConfig:
+                description: ReleaseConfigDefinition holds the release tag for each
+                  component and registry details
+                properties:
+                  cniTag:
+                    minLength: 1
+                    type: string
+                  infraTag:
+                    minLength: 1
+                    type: string
+                  monitorTag:
+                    minLength: 1
+                    type: string
+                  registry:
+                    description: RegistryConfig holds the registry information
+                    properties:
+                      password:
+                        minLength: 1
+                        type: string
+                      url:
+                        minLength: 1
+                        type: string
+                      username:
+                        minLength: 1
+                        type: string
+                    required:
+                    - password
+                    - url
+                    - username
+                    type: object
+                  vrsTag:
+                    minLength: 1
+                    type: string
+                required:
+                - cniTag
+                - infraTag
+                - monitorTag
+                - registry
+                - vrsTag
+                type: object
+              vrsConfig:
+                description: VRSConfigDefinition holds user specified config for VRS
+                properties:
+                  controllers:
+                    items:
+                      type: string
+                    minItems: 1
+                    type: array
+                  platform:
+                    type: string
+                  underlayUplink:
+                    minLength: 1
+                    type: string
+                required:
+                - controllers
+                - underlayUplink
+                type: object
+            required:
+            - cniConfig
+            - monitorConfig
+            - podNetworkConfig
+            - releaseConfig
+            - vrsConfig
+            type: object
+          status:
+            description: NuageCNIConfigStatus defines the observed state of NuageCNIConfig
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

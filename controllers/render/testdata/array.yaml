@@ -1,0 +1,16 @@
+# Copyright 2020 Nokia
+# Licensed under the Apache License 2.0.
+# SPDX-License-Identifier: Apache-2.0
+
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: {{.K8SAPIServerURL}}
+  name: {{fname "test-podname"}}
+spec:
+  containers:
+    {{if (eq (len .VRSConfig.Controllers) 2)}}
+  - image: "busybox"
+    {{end}}

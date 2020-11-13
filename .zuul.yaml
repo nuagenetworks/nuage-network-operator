@@ -5,7 +5,6 @@
       jobs:
         - golang-lint
         - network-operator-deployment-images
-        - network-operator-deployment-images
         - network-operator-integration-centos-7
     gate:
       jobs:
