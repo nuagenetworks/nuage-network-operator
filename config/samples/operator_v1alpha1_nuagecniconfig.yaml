@@ -1,0 +1,13 @@
+# Copyright 2020 Nokia
+# Licensed under the Apache License 2.0.
+# SPDX-License-Identifier: Apache-2.0
+
+
+
+apiVersion: operator.nuage.io/v1alpha1
+kind: NuageCNIConfig
+metadata:
+  name: nuagecniconfig-sample
+spec:
+  # Add fields here
+  foo: bar

@@ -1,0 +1,22 @@
+# Copyright 2020 Nokia
+# Licensed under the Apache License 2.0.
+# SPDX-License-Identifier: Apache-2.0
+
+
+
+
+# Prometheus Monitor Service (Metrics)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: controller-manager-metrics-monitor
+  namespace: system
+spec:
+  endpoints:
+    - path: /metrics
+      port: https
+  selector:
+    matchLabels:
+      control-plane: controller-manager
