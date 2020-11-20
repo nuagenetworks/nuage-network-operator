@@ -28,7 +28,7 @@
       container_command: docker
       zuul_work_dir: "{{ ansible_user_dir }}/src/github.com"
       operator_images:
-        - context: kubernetes/nuage-network-operator
+        - context: nuagenetworks/nuage-network-operator
           repository: nuage/nuage-network-operator
 
 - job:
@@ -36,7 +36,7 @@
     parent: nuage-build-docker-image
     nodeset: centos-7
     required-projects:
-      - gerrit.an.nuagenetworks.net/kubernetes/nuage-network-operator
+      - gerrit.an.nuagenetworks.net/nuagenetworks/nuage-network-operator
       - gerrit.an.nuagenetworks.net/nuagenetworks/nuage-k8s-infra
       - gerrit.an.nuagenetworks.net/nuagenetworks/nuage-cni
       - gerrit.an.nuagenetworks.net/nuagenetworks/nuage-kubernetes
@@ -46,7 +46,7 @@
       container_command: docker
       zuul_work_dir: "{{ ansible_user_dir }}/src/github.com/"
       operator_images:
-        - context: kubernetes/nuage-network-operator
+        - context: nuagenetworks/nuage-network-operator
           repository: nuage/nuage-network-operator
       docker_images:
         - context: nuagenetworks/nuage-k8s-infra
