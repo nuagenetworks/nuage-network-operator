@@ -16,6 +16,6 @@ Following steps only provide an overview to create a Kubernetes cluster with Nua
 
 1. Create initial kubernetes cluster using [kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/). Nodes would be in NotReady state as the network components are not yet created.
 2. On VSD, create an enterprise and add an admin user to the enterprise. Please refer to VSP documentation for this
-3. Update operator image in the [deployment](./config/manager/manager.yaml)
-4. Populate NuageCNIConfig custom resource. A sample custom resource file can be found [here](./config/crd/bases/operator.nuage.io_nuagecniconfigs.yaml)
+3. Update operator image in the [deployment](./example-configs/create_nuage_operator.yaml)
+4. Populate NuageCNIConfig custom resource. A sample custom resource file can be found [here](./example-configs/nuageconfig.yaml)
 5. Nuage Monitor, CNI and VRS components are created in `nuage-network-operator` namespaces as daemonsets
