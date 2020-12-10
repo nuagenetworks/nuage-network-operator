@@ -1,0 +1,54 @@
+apiVersion: operator.nuage.io/v1alpha1
+kind: NuageCNIConfig
+metadata:
+  name: nuage-network
+spec:
+  vrsConfig:
+     controllers:
+        - <Master controller IP>
+        - <Stand-by controller IP>
+     underlayUplink: eth0
+  monitorConfig:
+     vsdAddress: <VSD IP>
+     vsdPort: 7443
+     vsdMetadata:
+        enterprise: <Enterprise name>
+        domain: <L3 Domain name>
+        user: <username of an administrator user within the enterprise>
+        userCert: |
+         <include the content of the username.pem certificate
+          file generated for the above user on the VSD>
+        userKey: |
+          <include the content of the username-Key.pem key file
+          generated for the above user on the VSD>
+     vsdFlags:
+        underlayEnabled: true
+        autoScaleSubnets: true
+        statsEnabled: true
+  releaseConfig:
+     registry:
+        url: <docker registery details>
+        # username if the registry requires a username, if it doesn't,
+        # use the value 'username'
+        username: username
+        # password if the registry requires a password, if it doesn't,
+        # use the value 'password'
+        password: password
+     # Replace with the proper image path for the Nuage CNI components.
+     # Use a specific version tag to the version of the operator matching
+     # your environment.
+     vrsTag: registry.domain.tld/nuage/vrs:20.10.2-106
+     cniTag: registry.domain.tld/nuage/cni:20.10.2-108
+     monitorTag: registry.domain.tld/nuage/monitor:20.10.2-108
+     infraTag: registry.domain.tld/nuage/infra:20.10.2-108
+  cniConfig: 
+     mtu: 1450
+     # URL to the Nuage Monitor pod, in a single master k8s node,
+     # this is https://master-ip:9443/, in case of multiple master nodes,
+     # a load-balancer is needed to load-balance across all the master nodes
+     #  on port 9443."
+     loadBalancerURL: https://<master-ip>:9443/
+  podNetworkConfig:
+     podNetwork:  <POD Network CIDR>
+     subnetLength: 8
+     ClusterServiceNetworkCIDR: <Service CIDR>
