@@ -5,22 +5,22 @@
       jobs:
         - golang-lint
         - network-operator-deployment-images
-        - network-operator-integration-centos-7
+        - network-operator-integration-centos-8
     gate:
       jobs:
         - golang-lint
         - network-operator-build-image
         - network-operator-deployment-images
-        - network-operator-integration-centos-7
+        - network-operator-integration-centos-8
     periodic:
       jobs:
         - network-operator-deployment-images
-        - network-operator-integration-centos-7
+        - network-operator-integration-centos-8
 
 - job:
     name: network-operator-build-image
     parent: nuage-build-docker-image
-    nodeset: centos-7
+    nodeset: centos-8
     vars:
       vsp_release: "{{ nuage_vsp_release }}"
       builder: operator
@@ -33,7 +33,7 @@
 - job:
     name: network-operator-deployment-images
     parent: nuage-build-docker-image
-    nodeset: centos-7
+    nodeset: centos-8
     required-projects:
       - gerrit.an.nuagenetworks.net/nuagenetworks/nuage-network-operator
       - gerrit.an.nuagenetworks.net/nuagenetworks/nuage-k8s-infra
@@ -66,8 +66,9 @@
           repository: nuage/monitor
 
 - job:
-    name: network-operator-integration-centos-7
+    name: network-operator-integration-centos-8
     parent: deployment-kubernetes-centos-7
+    nodeset: centos-8
     dependencies: network-operator-deployment-images
     description: |
       Nuage k8s integration job
