@@ -67,7 +67,7 @@
 
 - job:
     name: network-operator-integration-centos-8
-    parent: deployment-kubernetes-centos-7
+    parent: deployment-kubernetes-centos-8
     nodeset: centos-8
     dependencies: network-operator-deployment-images
     description: |
