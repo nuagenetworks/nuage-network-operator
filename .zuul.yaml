@@ -68,7 +68,7 @@
 - job:
     name: network-operator-integration-centos-8
     parent: deployment-kubernetes-centos-8
-    nodeset: centos-8
+    nodeset: single-node-centos
     dependencies: network-operator-deployment-images
     description: |
       Nuage k8s integration job
