@@ -12,10 +12,6 @@
         - network-operator-build-image
         - network-operator-deployment-images
         - network-operator-integration-centos-8
-    periodic:
-      jobs:
-        - network-operator-deployment-images
-        - network-operator-integration-centos-8
 
 - job:
     name: network-operator-build-image
